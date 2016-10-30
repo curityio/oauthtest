@@ -1,0 +1,4 @@
+allprojects {
+    group 'com.athaydes.oauth'
+    version '1.0-SNAPSHOT'
+}

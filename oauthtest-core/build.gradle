@@ -1,0 +1,15 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compileOnly "com.google.code.findbugs:annotations:3.0.1"
+    compile "com.sun.jersey:jersey-client:1.19.3"
+    compile "org.picocontainer:picocontainer:2.15"
+    testCompile 'junit:junit:4.12'
+}
