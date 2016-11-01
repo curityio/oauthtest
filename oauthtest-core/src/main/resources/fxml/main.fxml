@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+<BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.athaydes.oauth.core.controller.MainController">
+    <top>
+        <VBox>
+            <children>
+                <Accordion>
+                    <panes>
+                        <TitledPane animated="false" text="OAuth Server Configuration">
+                            <content>
+                                <fx:include source="server-config.fxml"/>
+                            </content>
+                        </TitledPane>
+                        <TitledPane prefHeight="200.0" prefWidth="200.0" text="SSL Settings">
+                            <content>
+                                <fx:include source="ssl-settings.fxml"/>
+                            </content>
+                        </TitledPane>
+                    </panes>
+                </Accordion>
+            </children>
+        </VBox>
+    </top>
+    <center>
+        <BorderPane minHeight="-Infinity" minWidth="-Infinity">
+            <center>
+                <SplitPane dividerPositions="0.7" orientation="VERTICAL" BorderPane.alignment="CENTER">
+                    <items>
+                        <TabPane tabClosingPolicy="UNAVAILABLE">
+                            <tabs>
+                                <Tab text="Client Credentials">
+                                    <content>
+                                        <AnchorPane minHeight="30.0" minWidth="40.0" prefHeight="180.0"
+                                                    prefWidth="200.0"/>
+                                    </content>
+                                </Tab>
+                                <Tab text="Authorization Code">
+                                    <content>
+                                        <ScrollPane>
+                                            <content>
+                                                <AnchorPane prefHeight="180.0" prefWidth="200.0">
+                                                    <children>
+                                                        <VBox layoutX="10.0" layoutY="10.0">
+                                                            <children>
+                                                                <fx:include fx:id="codeFlow" source="code-flow.fxml"/>
+                                                            </children>
+                                                        </VBox>
+                                                    </children>
+                                                    <opaqueInsets>
+                                                        <Insets/>
+                                                    </opaqueInsets>
+                                                </AnchorPane>
+                                            </content>
+                                        </ScrollPane>
+                                    </content>
+                                </Tab>
+                                <Tab text="Resource Owner Password">
+                                    <content>
+                                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0"
+                                                    prefWidth="200.0"/>
+                                    </content>
+                                </Tab>
+                                <Tab text="Implicit">
+                                    <content>
+                                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0"
+                                                    prefWidth="200.0"/>
+                                    </content>
+                                </Tab>
+                            </tabs>
+                        </TabPane>
+                        <TabPane>
+                            <tabs>
+                                <Tab closable="false" text="Request">
+                                    <content>
+                                        <TextArea id="current-request" editable="false">
+                                            <font>
+                                                <Font name="Courier New" size="12.0"/>
+                                            </font>
+                                            <padding>
+                                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                            </padding>
+                                        </TextArea>
+                                    </content>
+                                </Tab>
+                                <Tab closable="false" text="Response">
+                                    <content>
+                                        <TextArea id="current-response" fx:id="currentResponse" editable="false">
+                                            <font>
+                                                <Font name="Courier New" size="12.0"/>
+                                            </font>
+                                            <padding>
+                                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                            </padding>
+                                        </TextArea>
+                                    </content>
+                                </Tab>
+                            </tabs>
+                        </TabPane>
+                    </items>
+                </SplitPane>
+            </center>
+            <top>
+                <VBox alignment="BOTTOM_LEFT" BorderPane.alignment="CENTER">
+                    <children>
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="OAuth Flows">
+                            <VBox.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                            </VBox.margin>
+                            <font>
+                                <Font size="14.0"/>
+                            </font>
+                        </Text>
+                    </children>
+                    <BorderPane.margin>
+                        <Insets left="10.0"/>
+                    </BorderPane.margin>
+                </VBox>
+            </top>
+        </BorderPane>
+    </center>
+</BorderPane>

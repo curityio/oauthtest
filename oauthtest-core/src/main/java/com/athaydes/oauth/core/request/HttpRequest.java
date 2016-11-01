@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- *
+ * Simplified representation of a HTTP Request that is enough to represent any OAuth request.
  */
 public abstract class HttpRequest implements Event {
 
@@ -49,7 +49,6 @@ public abstract class HttpRequest implements Event {
     }
 
     public ClientResponse send() {
-        System.out.println( "Sending request" );
         Client client = Client.create();
         WebResource requestBuilder = client
                 .resource( host )
@@ -60,13 +59,9 @@ public abstract class HttpRequest implements Event {
             requestBuilder.header( header.getKey(), header.getValue() );
         }
 
-        ClientResponse response = ( body == null ) ?
+        return ( body == null ) ?
                 requestBuilder.method( method, ClientResponse.class ) :
                 requestBuilder.method( method, ClientResponse.class, body );
-
-        System.out.println( "Response: " + response );
-
-        return response;
     }
 
     public String toCurl() {
@@ -79,4 +74,15 @@ public abstract class HttpRequest implements Event {
                 .put( "Accept", "application/json" );
     }
 
+    @Override
+    public String toString() {
+        return "HttpRequest{" +
+                "method='" + method + '\'' +
+                ", host='" + host + '\'' +
+                ", path='" + path + '\'' +
+                ", headers=" + headers +
+                ", query=" + query +
+                ", body='" + body + '\'' +
+                '}';
+    }
 }

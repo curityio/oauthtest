@@ -23,7 +23,7 @@ public class OAuthTestApplication extends Application {
         BuilderFactory builderFactory = new JavaFXBuilderFactory();
 
         Parent oauthFlows = FXMLLoader.load(
-                getClass().getResource( "/fxml/oauth-flows.fxml" ),
+                getClass().getResource( "/fxml/main.fxml" ),
                 null,
                 builderFactory,
                 new ApplicationContainer( primaryStage )::get );

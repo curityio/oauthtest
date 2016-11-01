@@ -1,18 +1,20 @@
 package com.athaydes.oauth.core.controller;
 
 import com.athaydes.oauth.core.component.Arrows;
+import com.athaydes.oauth.core.controller.view.CodeFlowAuthzRequestView;
 import com.athaydes.oauth.core.request.CodeFlowAuthorizeRequest;
 import com.athaydes.oauth.core.request.HttpRequest;
-import com.athaydes.oauth.core.state.CodeFlowAuthzState;
+import com.athaydes.oauth.core.request.HttpResponseEvent;
 import com.athaydes.oauth.core.state.OAuthServerState;
 import com.athaydes.oauth.core.util.event.EventBus;
+import com.athaydes.oauth.core.util.event.Notification;
 import com.sun.jersey.api.client.ClientResponse;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.control.TextField;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -24,15 +26,9 @@ import java.util.Arrays;
 public class CodeFlowController {
 
     @FXML
-    private TextField responseTypeField;
+    private Node authzRequestView;
     @FXML
-    private TextField clientIdField;
-    @FXML
-    private TextField redirectUriField;
-    @FXML
-    private TextField scopeField;
-    @FXML
-    private TextField stateField;
+    private CodeFlowAuthzRequestView authzRequestViewController;
 
     @FXML
     private Node arrows;
@@ -44,7 +40,7 @@ public class CodeFlowController {
     @Nullable
     private OAuthServerState serverState = null;
     @Nullable
-    private HttpRequest currentRequest = null;
+    private volatile HttpRequest currentRequest = null;
 
     public CodeFlowController( EventBus eventBus ) {
         this.eventBus = eventBus;
@@ -57,16 +53,18 @@ public class CodeFlowController {
 
         InvalidationListener authzFieldChangeListener = ( event ) -> {
             if ( serverState != null ) {
-                currentRequest = new CodeFlowAuthorizeRequest( serverState, getCodeFlowAuthzState() );
-                eventBus.publish( currentRequest );
+                System.out.println( "SETTING CURRENT REQ" );
+                currentRequest = new CodeFlowAuthorizeRequest( serverState,
+                        authzRequestViewController.getCodeFlowAuthzState() );
+                System.out.println( "Current request set to : " + currentRequest );
+            } else {
+                System.out.println("SERVER STATE IS NULL");
             }
         };
 
-        clientIdField.onActionProperty().addListener( authzFieldChangeListener );
-        redirectUriField.onActionProperty().addListener( authzFieldChangeListener );
-        scopeField.onActionProperty().addListener( authzFieldChangeListener );
-        stateField.onActionProperty().addListener( authzFieldChangeListener );
+        authzRequestViewController.setInvalidationListener( authzFieldChangeListener );
 
+        // notice that the requestService will run whatever currentRequest is selected
         RequestService requestService = new RequestService();
 
         arrowsController.setSteps( Arrays.asList(
@@ -75,14 +73,11 @@ public class CodeFlowController {
         ) );
     }
 
-    private CodeFlowAuthzState getCodeFlowAuthzState() {
-        return new CodeFlowAuthzState(
-                responseTypeField.getText(),
-                clientIdField.getText(),
-                redirectUriField.getText(),
-                scopeField.getText(),
-                stateField.getText()
-        );
+    private void onResponse( ClientResponse response ) {
+        eventBus.publish( new HttpResponseEvent( response ) );
+        Platform.runLater( () -> {
+            // TODO set the parameters that get calculated
+        } );
     }
 
     private class RequestService extends Service<ClientResponse> {
@@ -94,11 +89,15 @@ public class CodeFlowController {
                 return new Task<ClientResponse>() {
                     @Override
                     protected ClientResponse call() throws Exception {
-                        return request.send();
+                        ClientResponse response = request.send();
+                        onResponse( response );
+                        return response;
                     }
                 };
             } else {
-                throw new IllegalStateException( "No request seems to be currently selected" );
+                String error = "CodeFlow RequestService: cannot run request as it is null";
+                eventBus.publish( new Notification( Notification.Level.ERROR, error ) );
+                throw new IllegalStateException( error );
             }
         }
     }

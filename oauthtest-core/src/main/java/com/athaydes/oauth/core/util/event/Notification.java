@@ -12,7 +12,7 @@ public class Notification implements Event {
     private final String text;
     private final Level level;
 
-    public Notification( String text, Level level ) {
+    public Notification( Level level, String text ) {
         this.text = text;
         this.level = level;
     }

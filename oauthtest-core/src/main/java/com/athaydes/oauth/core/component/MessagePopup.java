@@ -13,6 +13,12 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
+/**
+ * A transparent message popup that may display {@link Notification} to users in balloons.
+ * <p>
+ * Each different {@link com.athaydes.oauth.core.util.event.Notification.Level} may be shown with a different
+ * appearance, and may be hidden automatically or require the user to close it manually.
+ */
 public class MessagePopup {
 
     private static final double WIDTH = 400;

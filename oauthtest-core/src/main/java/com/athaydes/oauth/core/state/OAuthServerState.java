@@ -3,7 +3,7 @@ package com.athaydes.oauth.core.state;
 import com.athaydes.oauth.core.util.event.Event;
 
 /**
- *
+ * Data class representing the OAuth Server configuration state.
  */
 public class OAuthServerState implements Event {
 
@@ -27,5 +27,14 @@ public class OAuthServerState implements Event {
 
     public String getTokenEndpoint() {
         return tokenEndpoint;
+    }
+
+    @Override
+    public String toString() {
+        return "OAuthServerState{" +
+                "baseUrl='" + baseUrl + '\'' +
+                ", authorizeEndpoint='" + authorizeEndpoint + '\'' +
+                ", tokenEndpoint='" + tokenEndpoint + '\'' +
+                '}';
     }
 }

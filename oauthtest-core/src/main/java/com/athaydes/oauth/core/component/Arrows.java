@@ -1,6 +1,7 @@
 package com.athaydes.oauth.core.component;
 
-import com.athaydes.oauth.core.util.Workers;
+import com.athaydes.oauth.core.util.event.EventBus;
+import com.athaydes.oauth.core.util.event.Notification;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -13,7 +14,7 @@ import javafx.scene.text.Text;
 import java.util.List;
 
 /**
- *
+ * Back/Forward arrow buttons to control actions that have many steps.
  */
 public class Arrows {
 
@@ -47,11 +48,10 @@ public class Arrows {
     private final ObservableList<Step> steps = FXCollections.observableArrayList();
 
     private int step = 0;
+    private final EventBus eventBus;
 
-    private final Workers workers;
-
-    public Arrows( Workers workers ) {
-        this.workers = workers;
+    public Arrows( EventBus eventBus ) {
+        this.eventBus = eventBus;
     }
 
     @FXML
@@ -70,32 +70,40 @@ public class Arrows {
         if ( step > 0 ) {
             step--;
             resetComponents();
-
-            // TODO change screen
         }
     }
 
     @FXML
     private void next() {
         if ( step < steps.size() ) {
+            backButton.setDisable( true );
+            nextButton.setDisable( true );
+
             Step runnableStep = steps.get( step );
             currentStep.setText( "Running..." );
             Service<?> service = runnableStep.service();
             service.setOnSucceeded( event -> {
                 System.out.println( "SUCCESS" );
                 step++;
-                currentStep.setText( runnableStep.name() );
-                // TODO change screens
+                service.reset();
             } );
             service.setOnFailed( event -> {
-                System.err.println( "FAIL" );
+                System.out.println( "FAIL" );
+                resetComponents();
+                eventBus.publish( new Notification( Notification.Level.WARNING,
+                        "Step '" + runnableStep.name() + "' failed!" ) );
+                service.reset();
             } );
             service.setOnReady( event -> {
                 System.out.println( "READY" );
                 resetComponents();
             } );
 
-            service.start();
+            try {
+                service.start();
+            } catch ( Exception e ) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -109,8 +117,10 @@ public class Arrows {
     private void resetComponents() {
         backButton.setDisable( step == 0 || steps.isEmpty() );
         nextButton.setDisable( step >= steps.size() );
-        if ( 0 <= step && step < steps.size() ) {
+        if ( 0 <= step && step < steps.size() - 1 ) {
             currentStep.setText( steps.get( step ).name() );
+        } else {
+            currentStep.setText( "..." );
         }
     }
 
