@@ -89,9 +89,17 @@ public class Arrows {
             } );
             service.setOnFailed( event -> {
                 System.out.println( "FAIL" );
+
+                @SuppressWarnings( "ThrowableResultOfMethodCallIgnored" )
+                Throwable error = event.getSource().getException();
+
+                String errorMessage = ( error.getMessage() != null ) ?
+                        error.getMessage() :
+                        error.toString();
+
                 resetComponents();
                 eventBus.publish( new Notification( Notification.Level.WARNING,
-                        "Step '" + runnableStep.name() + "' failed!" ) );
+                        "Step '" + runnableStep.name() + "' failed: " + errorMessage ) );
                 service.reset();
             } );
             service.setOnReady( event -> {
@@ -103,6 +111,7 @@ public class Arrows {
                 service.start();
             } catch ( Exception e ) {
                 e.printStackTrace();
+                resetComponents();
             }
         }
     }
@@ -116,11 +125,9 @@ public class Arrows {
 
     private void resetComponents() {
         backButton.setDisable( step == 0 || steps.isEmpty() );
-        nextButton.setDisable( step >= steps.size() );
+        nextButton.setDisable( step >= steps.size() - 1 );
         if ( 0 <= step && step < steps.size() - 1 ) {
             currentStep.setText( steps.get( step ).name() );
-        } else {
-            currentStep.setText( "..." );
         }
     }
 
