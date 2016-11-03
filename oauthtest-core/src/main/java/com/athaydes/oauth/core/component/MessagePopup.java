@@ -4,11 +4,9 @@ import com.athaydes.oauth.core.util.event.EventBus;
 import com.athaydes.oauth.core.util.event.Notification;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
-import javafx.scene.text.Text;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
@@ -25,16 +23,16 @@ public class MessagePopup {
     private static final double HEIGHT = 900;
     private static final double BALOON_SPACING = 5;
 
-    private final GridPane panels;
+    private final VBox panels;
     private final Stage dialog;
 
     public MessagePopup( Stage primaryStage, EventBus eventBus ) {
         eventBus.subscribe( Notification.class, this::show );
 
-        this.panels = new GridPane();
-        //panels.setFillWidth( false );
+        this.panels = new VBox( BALOON_SPACING );
         panels.setMaxWidth( WIDTH );
-        panels.setStyle( "-fx-background-color: transparent; -fx-border-style: none;" );
+        panels.setStyle( "-fx-background-color: transparent; " +
+                "-fx-border-style: none;" );
 
         Scene dialogScene = new Scene( panels, WIDTH, HEIGHT, null );
 
@@ -45,34 +43,11 @@ public class MessagePopup {
         dialog.setScene( dialogScene );
     }
 
-    private static String colorFor( Notification.Level level ) {
-        switch ( level ) {
-            case ERROR:
-                return "lightsalmon";
-            case WARNING:
-                return "lightpink";
-            default:
-                return "antiquewhite";
-        }
-    }
-
     private void show( Notification notification ) {
-        // FIXME textPane still overflows the parent
-        GridPane textPane = new GridPane();
-        textPane.setStyle( "-fx-background-color: " + colorFor( notification.getLevel() ) + ";" +
-                "-fx-background-radius: 6;" +
-                "-fx-cursor: hand;" );
-        textPane.setMaxWidth( 30 );
+        NotificationBox box = new NotificationBox( notification );
+        box.setTextWidth( WIDTH );
 
-        // hide the text within  this block to avoid accidental use
-        {
-            Text text = new Text( notification.getText() );
-            text.setWrappingWidth( WIDTH - 15 );
-            textPane.getChildren().add( text );
-            GridPane.setMargin( text, new Insets( 10 ) );
-        }
-
-        panels.getChildren().add( 0, textPane );
+        panels.getChildren().add( 0, box );
 
         // set dialog position
         {
@@ -87,8 +62,8 @@ public class MessagePopup {
         dialog.show();
 
         Runnable removeNotification = () -> {
-            if ( panels.getChildren().contains( textPane ) ) {
-                panels.getChildren().remove( textPane );
+            if ( panels.getChildren().contains( box ) ) {
+                panels.getChildren().remove( box );
                 if ( panels.getChildren().isEmpty() ) {
                     dialog.hide();
                 } else {
@@ -97,7 +72,7 @@ public class MessagePopup {
             }
         };
 
-        textPane.setOnMouseClicked( ( event -> removeNotification.run() ) );
+        box.setOnMouseClicked( ( event -> removeNotification.run() ) );
 
         if ( notification.getLevel().ordinal() <= Notification.Level.INFO.ordinal() ) {
             Timeline timeline = new Timeline( new KeyFrame( Duration.seconds( 5 ),
