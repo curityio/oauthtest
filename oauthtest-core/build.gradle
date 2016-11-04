@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'application'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -6,6 +7,8 @@ targetCompatibility = 1.8
 repositories {
     jcenter()
 }
+
+mainClassName = "com.athaydes.oauth.core.OAuthTestApplication"
 
 dependencies {
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
