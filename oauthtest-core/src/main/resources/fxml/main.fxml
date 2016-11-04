@@ -14,7 +14,7 @@
 <?import javafx.scene.text.Font?>
 <BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
             xmlns="http://javafx.com/javafx/8.0.112-ea" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.athaydes.oauth.core.controller.MainController">
+            fx:controller="io.curity.oauth.core.controller.MainController">
     <top>
     </top>
     <center>
