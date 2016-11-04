@@ -2,14 +2,19 @@ package com.athaydes.oauth.core.component;
 
 import com.athaydes.oauth.core.util.event.EventBus;
 import com.athaydes.oauth.core.util.event.Notification;
+import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * A transparent message popup that may display {@link Notification} to users in balloons.
@@ -20,7 +25,7 @@ import javafx.util.Duration;
 public class MessagePopup {
 
     private static final double WIDTH = 400;
-    private static final double HEIGHT = 900;
+    private static final double HEIGHT = 1200;
     private static final double BALOON_SPACING = 5;
 
     private final VBox panels;
@@ -34,11 +39,10 @@ public class MessagePopup {
         panels.setStyle( "-fx-background-color: transparent; " +
                 "-fx-border-style: none;" );
 
-        Scene dialogScene = new Scene( panels, WIDTH, HEIGHT, null );
+        Scene dialogScene = new Scene( new Group( panels ), WIDTH, HEIGHT, Color.TRANSPARENT );
 
-        this.dialog = new Stage();
+        this.dialog = new Stage( StageStyle.TRANSPARENT );
         dialog.setResizable( false );
-        dialog.initStyle( StageStyle.TRANSPARENT );
         dialog.initOwner( primaryStage );
         dialog.setScene( dialogScene );
     }
@@ -62,41 +66,41 @@ public class MessagePopup {
         dialog.show();
 
         Runnable removeNotification = () -> {
-            if ( panels.getChildren().contains( box ) ) {
-                panels.getChildren().remove( box );
-                if ( panels.getChildren().isEmpty() ) {
-                    dialog.hide();
-                } else {
-                    adjustDialog();
-                }
+            panels.getChildren().remove( box );
+            if ( panels.getChildren().isEmpty() ) {
+                dialog.hide();
+            } else {
+                adjustDialog();
             }
         };
 
-        box.setOnMouseClicked( ( event -> removeNotification.run() ) );
+        final AtomicBoolean removing = new AtomicBoolean( false );
+
+        Consumer<Boolean> removeNotificationSlowly = ( isClick ) -> {
+            if ( removing.compareAndSet( false, true ) ) {
+                FadeTransition ft = new FadeTransition( Duration.millis( isClick ? 250 : 2_500 ), box );
+                ft.setToValue( 0.0 );
+                ft.setOnFinished( e -> removeNotification.run() );
+                ft.play();
+            }
+        };
+
+        box.setOnMouseClicked( ( event -> removeNotificationSlowly.accept( true ) ) );
 
         if ( notification.getLevel().ordinal() <= Notification.Level.INFO.ordinal() ) {
             Timeline timeline = new Timeline( new KeyFrame( Duration.seconds( 5 ),
-                    ( event ) -> removeNotification.run() ) );
+                    ( event ) -> removeNotificationSlowly.accept( false ) ) );
 
             timeline.play();
         }
     }
 
     private void adjustDialog() {
-        // couldn't figure out a way to resize the dialog that did not involve waiting for the panels to resize first
         Timeline timeline = new Timeline( new KeyFrame( Duration.millis( 50 ),
-                ( e ) -> {
-                    double totalHeight = panels.getChildren().stream()
-                            .mapToDouble( it -> ( ( Region ) it ).getHeight() )
-                            .sum();
-
-                    double spacingToAdd = panels.getChildren().size() == 1 ? 2D :
-                            panels.getChildren().size() * BALOON_SPACING + 2D;
-
-                    System.out.println( "Total height is " + totalHeight );
-                    dialog.setHeight( totalHeight + spacingToAdd );
+                ( event ) -> {
+                    double totalHeight = dialog.getScene().getRoot().prefHeight( 0 );
+                    dialog.setHeight( totalHeight );
                 } ) );
-
         timeline.play();
     }
 
