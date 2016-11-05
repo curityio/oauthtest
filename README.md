@@ -22,15 +22,14 @@ cd oauthtest
 > Note: The build is managed by the Gradle wrapper, so you don't need to download Gradle itself, the correct version of Gradle
   will be automatically downloaded when first run.
 
-This will create two jars in the `oauthtest-core/build/libs` directory, a simple jar with only this project's classes
-and resources, and a runnable jar containing all dependencies.
+This will create a runnable jar in the `oauthtest-core/build/libs` directory.
 
 ## Running the Application
 
 With Gradle:
 
 ```
-gradle run
+./gradlew run
 ```
 
 Using the runnable jar:
@@ -38,7 +37,7 @@ Using the runnable jar:
 1. First, build a runnable jar:
 
 ```
-gradle fatJar
+./gradlew fatJar
 ```
 
 2. Now, run the jar with java:
