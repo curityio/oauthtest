@@ -3,12 +3,11 @@ package se.curity.oauth.core.util;
 import se.curity.oauth.core.MainApplication;
 import se.curity.oauth.core.state.OAuthServerState;
 
-import javax.annotation.Nullable;
 import java.util.prefs.Preferences;
 
-public class PreferencesUtils {
-
-    private static final Preferences preferences = Preferences.userNodeForPackage( MainApplication.class );
+public class PreferencesUtils
+{
+    private static final Preferences _preferences = Preferences.userNodeForPackage(MainApplication.class);
 
     private static final String BASE_URL_PREFERENCE_KEY = "BASE_URL";
     private static final String AUTHZ_ENDPOINT_PREFERENCE_KEY = "AUTHZ_ENDPOINT";
@@ -18,27 +17,19 @@ public class PreferencesUtils {
     private static final String TOKEN_ENDPOINT = "/oauth/token";
     private static final String AUTHZ_ENDPOINT = "/oauth/authorize";
 
-    @Nullable
-    private static OAuthServerState oauthServerState;
+    public static OAuthServerState getOAuthServerPreferences()
+    {
+        String baseUrl = _preferences.get(BASE_URL_PREFERENCE_KEY, BASE_URL);
+        String authorizeEndpoint = _preferences.get(AUTHZ_ENDPOINT_PREFERENCE_KEY, AUTHZ_ENDPOINT);
+        String tokenEndpoint = _preferences.get(TOKEN_ENDPOINT_PREFERENCE_KEY, TOKEN_ENDPOINT);
 
-    public static synchronized OAuthServerState getOAuthServerPreferences() {
-
-        if ( oauthServerState == null ) {
-
-            String baseUrl = preferences.get( BASE_URL_PREFERENCE_KEY, BASE_URL );
-            String authorizeEndpoint = preferences.get( AUTHZ_ENDPOINT_PREFERENCE_KEY, AUTHZ_ENDPOINT );
-            String tokenEndpoint = preferences.get( TOKEN_ENDPOINT_PREFERENCE_KEY, TOKEN_ENDPOINT );
-
-            oauthServerState = new OAuthServerState( baseUrl, authorizeEndpoint, tokenEndpoint );
-        }
-
-        return oauthServerState;
+        return new OAuthServerState(baseUrl, authorizeEndpoint, tokenEndpoint);
     }
 
-    public static void putOAuthServerPreferences(OAuthServerState oauthServerState) {
-
-        preferences.put( BASE_URL_PREFERENCE_KEY, oauthServerState.getBaseUrl());
-        preferences.put( AUTHZ_ENDPOINT_PREFERENCE_KEY, oauthServerState.getAuthorizeEndpoint() );
-        preferences.put( TOKEN_ENDPOINT_PREFERENCE_KEY, oauthServerState.getTokenEndpoint() ) ;
+    public static void putOAuthServerPreferences(OAuthServerState oauthServerState)
+    {
+        _preferences.put(BASE_URL_PREFERENCE_KEY, oauthServerState.getBaseUrl());
+        _preferences.put(AUTHZ_ENDPOINT_PREFERENCE_KEY, oauthServerState.getAuthorizeEndpoint());
+        _preferences.put(TOKEN_ENDPOINT_PREFERENCE_KEY, oauthServerState.getTokenEndpoint());
     }
 }
