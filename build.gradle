@@ -1,4 +1,4 @@
 allprojects {
-    group 'com.athaydes.oauth'
+    group 'se.curity.oauthtest'
     version '1.0-SNAPSHOT'
 }

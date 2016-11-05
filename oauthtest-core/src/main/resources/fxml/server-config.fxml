@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 <BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.athaydes.oauth.core.controller.OAuthServerController">
+            fx:controller="se.curity.oauth.core.controller.OAuthServerController">
     <center>
         <GridPane hgap="5.0" vgap="5.0">
             <columnConstraints>
