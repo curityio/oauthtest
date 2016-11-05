@@ -36,12 +36,12 @@ Using the runnable jar:
 
 1. First, build a runnable jar:
 
-```
-./gradlew fatJar
-```
+    ```
+    ./gradlew fatJar
+    ```
 
 2. Now, run the jar with java:
 
-```
-java -jar oauthtest-core/build/libs/oauthtest-run.jar
-```
+    ```
+    java -jar oauthtest-core/build/libs/oauthtest-run.jar
+    ```
