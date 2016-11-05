@@ -2,9 +2,11 @@ package se.curity.oauth.core.controller;
 
 import com.sun.jersey.api.client.ClientResponse;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.control.TextArea;
 import se.curity.oauth.core.component.Arrows;
 import se.curity.oauth.core.controller.view.CodeFlowAuthzRequestView;
 import se.curity.oauth.core.request.CodeFlowAuthorizeRequest;
@@ -25,9 +27,10 @@ public class CodeFlowController {
 
     @FXML
     private CodeFlowAuthzRequestView authzRequestViewController = null;
-
     @FXML
     private Arrows arrowsController = null;
+    @FXML
+    private TextArea curlCommand = null;
 
     private final EventBus eventBus;
 
@@ -42,7 +45,10 @@ public class CodeFlowController {
     protected void initialize() {
         eventBus.subscribe( OAuthServerState.class, ( @Nonnull OAuthServerState serverState ) -> {
             CodeFlowController.this.serverState = serverState;
+            updateCurlText();
         } );
+
+        authzRequestViewController.setInvalidationListener( observable -> updateCurlText() );
 
         // notice that the requestService will run whatever currentRequest is selected
         RequestService requestService = new RequestService();
@@ -53,13 +59,28 @@ public class CodeFlowController {
         ) );
     }
 
-    private HttpRequest createRequest() {
+    private void updateCurlText() {
+        @Nullable HttpRequest request = createRequestIfPossible();
+        if ( request != null ) {
+            curlCommand.setText( request.toCurl() );
+        }
+    }
+
+    @Nullable
+    private HttpRequest createRequestIfPossible() {
         if ( serverState != null ) {
-            System.out.println( "SETTING CURRENT REQ" );
             return new CodeFlowAuthorizeRequest( serverState,
                     authzRequestViewController.getCodeFlowAuthzState() );
         } else {
-            System.out.println( "SERVER STATE IS NULL" );
+            return null;
+        }
+    }
+
+    private HttpRequest createRequest() {
+        @Nullable HttpRequest request = createRequestIfPossible();
+        if ( request != null ) {
+            return request;
+        } else {
             String error = "CodeFlow RequestService: cannot run request as it is null";
             eventBus.publish( new Notification( Notification.Level.ERROR, error ) );
             throw new IllegalStateException( error );
@@ -87,6 +108,10 @@ public class CodeFlowController {
                 }
             };
         }
+    }
+
+    public interface CodeFlowRequestView {
+        void setInvalidationListener( InvalidationListener listener );
     }
 
 }
