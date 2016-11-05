@@ -1,10 +1,11 @@
 package se.curity.oauth.core.controller;
 
-import se.curity.oauth.core.state.OAuthServerState;
-import se.curity.oauth.core.util.event.EventBus;
 import javafx.beans.InvalidationListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import se.curity.oauth.core.state.OAuthServerState;
+import se.curity.oauth.core.util.Validators;
+import se.curity.oauth.core.util.event.EventBus;
 
 public class OAuthServerController {
 
@@ -29,13 +30,19 @@ public class OAuthServerController {
         baseUrl.textProperty().addListener( invalidationListener );
         authorizeEndpoint.textProperty().addListener( invalidationListener );
         tokenEndpoint.textProperty().addListener( invalidationListener );
+
+        Validators.makeValidatableField( baseUrl, Validators::isValidUrl );
     }
 
     private OAuthServerState getOAuthServerState() {
-        return new OAuthServerState(
-                baseUrl.getText(),
-                authorizeEndpoint.getText(),
-                tokenEndpoint.getText() );
+        if ( Validators.isValidUrl( baseUrl.getText() ) ) {
+            return OAuthServerState.validState(
+                    baseUrl.getText(),
+                    authorizeEndpoint.getText(),
+                    tokenEndpoint.getText() );
+        } else {
+            return OAuthServerState.invalid();
+        }
     }
 
 }

@@ -63,12 +63,14 @@ public class CodeFlowController {
         @Nullable HttpRequest request = createRequestIfPossible();
         if ( request != null ) {
             curlCommand.setText( request.toCurl() );
+        } else {
+            curlCommand.setText( "" );
         }
     }
 
     @Nullable
     private HttpRequest createRequestIfPossible() {
-        if ( serverState != null ) {
+        if ( serverState != null && serverState.isValid() ) {
             return new CodeFlowAuthorizeRequest( serverState,
                     authzRequestViewController.getCodeFlowAuthzState() );
         } else {
