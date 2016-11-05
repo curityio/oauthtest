@@ -40,7 +40,7 @@ public class OAuthServerController
         authorizeEndpoint.setText(_initialOAuthServerState.getTokenEndpoint());
 
         InvalidationListener invalidationListener = observable ->
-                _eventBus.publish(_initialOAuthServerState);
+                _eventBus.publish(getOAuthServerState());
 
         baseUrl.textProperty().addListener(invalidationListener);
         authorizeEndpoint.textProperty().addListener(invalidationListener);
