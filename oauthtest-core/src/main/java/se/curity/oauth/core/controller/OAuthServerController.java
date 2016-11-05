@@ -8,41 +8,49 @@ import javafx.beans.InvalidationListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 
-public class OAuthServerController {
-
-    private final OAuthServerState initialOAuthServerState;
+public class OAuthServerController
+{
+    private final OAuthServerState _initialOAuthServerState;
 
     @FXML
     private TextField baseUrl;
+
     @FXML
     private TextField authorizeEndpoint;
+
     @FXML
     private TextField tokenEndpoint;
 
-    private final EventBus eventBus;
+    private final EventBus _eventBus;
 
-    public OAuthServerController( EventBus eventBus, OAuthServerState oauthServerState, Stage primaryStage ) {
+    public OAuthServerController(EventBus eventBus, OAuthServerState oauthServerState, Stage primaryStage)
+    {
+        _eventBus = eventBus;
+        _initialOAuthServerState = oauthServerState;
 
-        this.eventBus = eventBus;
-        this.initialOAuthServerState = oauthServerState;
-
-        primaryStage.setOnCloseRequest( e -> PreferencesUtils.putOAuthServerPreferences(
-                baseUrl.getText(), authorizeEndpoint.getText(), tokenEndpoint.getText()
-        ));
+        primaryStage.setOnCloseRequest(e ->
+                PreferencesUtils.putOAuthServerPreferences(getOAuthServerState()));
     }
 
     @FXML
-    protected void initialize() {
-        baseUrl.setText( initialOAuthServerState.getBaseUrl()) ;
-        tokenEndpoint.setText( initialOAuthServerState.getAuthorizeEndpoint() );
-        authorizeEndpoint.setText( initialOAuthServerState.getTokenEndpoint() );
+    protected void initialize()
+    {
+        baseUrl.setText(_initialOAuthServerState.getBaseUrl());
+        tokenEndpoint.setText(_initialOAuthServerState.getAuthorizeEndpoint());
+        authorizeEndpoint.setText(_initialOAuthServerState.getTokenEndpoint());
 
         InvalidationListener invalidationListener = observable ->
-                eventBus.publish( initialOAuthServerState );
+                _eventBus.publish(_initialOAuthServerState);
 
-        baseUrl.textProperty().addListener( invalidationListener );
-        authorizeEndpoint.textProperty().addListener( invalidationListener );
-        tokenEndpoint.textProperty().addListener( invalidationListener );
+        baseUrl.textProperty().addListener(invalidationListener);
+        authorizeEndpoint.textProperty().addListener(invalidationListener);
+        tokenEndpoint.textProperty().addListener(invalidationListener);
     }
 
+    private OAuthServerState getOAuthServerState()
+    {
+        return new OAuthServerState(baseUrl.getText(),
+                authorizeEndpoint.getText(),
+                tokenEndpoint.getText());
+    }
 }

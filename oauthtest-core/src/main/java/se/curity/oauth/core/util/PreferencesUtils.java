@@ -35,10 +35,10 @@ public class PreferencesUtils {
         return oauthServerState;
     }
 
-    public static void putOAuthServerPreferences(String baseUrl, String authorizeEndpoint, String tokenEndpoint) {
+    public static void putOAuthServerPreferences(OAuthServerState oauthServerState) {
 
-        preferences.put( BASE_URL_PREFERENCE_KEY, baseUrl );
-        preferences.put( AUTHZ_ENDPOINT_PREFERENCE_KEY, authorizeEndpoint );
-        preferences.put( TOKEN_ENDPOINT_PREFERENCE_KEY, tokenEndpoint) ;
+        preferences.put( BASE_URL_PREFERENCE_KEY, oauthServerState.getBaseUrl());
+        preferences.put( AUTHZ_ENDPOINT_PREFERENCE_KEY, oauthServerState.getAuthorizeEndpoint() );
+        preferences.put( TOKEN_ENDPOINT_PREFERENCE_KEY, oauthServerState.getTokenEndpoint() ) ;
     }
 }
