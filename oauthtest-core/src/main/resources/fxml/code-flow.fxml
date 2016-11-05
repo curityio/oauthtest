@@ -9,6 +9,7 @@
     <center>
         <ScrollPane prefHeight="200.0" prefWidth="400.0">
             <content>
+                <!--suppress JavaFxUnresolvedFxIdReference : this id is used for field authzRequestViewController -->
                 <fx:include fx:id="authzRequestView" source="code-flow-authz-req.fxml"/>
             </content>
             <padding>
@@ -20,6 +21,7 @@
         </ScrollPane>
     </center>
     <top>
+        <!--suppress JavaFxUnresolvedFxIdReference : this id is used for field arrowsController -->
         <fx:include fx:id="arrows" source="arrows.fxml"/>
     </top>
     <padding>
