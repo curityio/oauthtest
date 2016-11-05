@@ -1,11 +1,11 @@
 package se.curity.oauth.core.request;
 
-import se.curity.oauth.core.util.MapBuilder;
-import se.curity.oauth.core.util.event.Event;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.UnmodifiableMultivaluedMap;
+import se.curity.oauth.core.util.MapBuilder;
+import se.curity.oauth.core.util.event.Event;
 
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MultivaluedMap;
@@ -50,13 +50,14 @@ public abstract class HttpRequest implements Event {
 
     public ClientResponse send() {
         Client client = Client.create();
-        WebResource requestBuilder = client
+        WebResource.Builder requestBuilder = client
                 .resource( host )
                 .path( path )
-                .queryParams( query );
+                .queryParams( query )
+                .getRequestBuilder();
 
         for (Map.Entry<String, Object> header : headers.entrySet()) {
-            requestBuilder.header( header.getKey(), header.getValue() );
+            requestBuilder = requestBuilder.header( header.getKey(), header.getValue() );
         }
 
         return ( body == null ) ?
