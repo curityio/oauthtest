@@ -12,13 +12,16 @@ import se.curity.oauth.core.controller.view.CodeFlowAuthzRequestView;
 import se.curity.oauth.core.request.CodeFlowAuthorizeRequest;
 import se.curity.oauth.core.request.HttpRequest;
 import se.curity.oauth.core.request.HttpResponseEvent;
+import se.curity.oauth.core.state.CodeFlowAuthzState;
 import se.curity.oauth.core.state.OAuthServerState;
+import se.curity.oauth.core.util.ListUtils;
 import se.curity.oauth.core.util.event.EventBus;
 import se.curity.oauth.core.util.event.Notification;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Implementation of the OAuth code flow logic.
@@ -70,20 +73,32 @@ public class CodeFlowController {
 
     @Nullable
     private HttpRequest createRequestIfPossible() {
-        if ( serverState != null && serverState.isValid() ) {
-            return new CodeFlowAuthorizeRequest( serverState,
-                    authzRequestViewController.getCodeFlowAuthzState() );
+        CodeFlowAuthzState codeFlowAuthzState = authzRequestViewController.getCodeFlowAuthzState();
+        if ( codeFlowAuthzState.isValid() && serverState != null && serverState.isValid() ) {
+            return new CodeFlowAuthorizeRequest( serverState, codeFlowAuthzState );
         } else {
             return null;
         }
     }
 
     private HttpRequest createRequest() {
-        @Nullable HttpRequest request = createRequestIfPossible();
-        if ( request != null ) {
-            return request;
+        CodeFlowAuthzState authzState = authzRequestViewController.getCodeFlowAuthzState();
+        if ( authzState.isValid() ) {
+            if ( serverState != null && serverState.isValid() ) {
+                return new CodeFlowAuthorizeRequest( serverState, authzState );
+            } else {
+                String error = ( serverState == null ) ?
+                        "OAuth server settings are not available" :
+                        "OAuth server settings have errors:" +
+                                ListUtils.joinStringsWith( "\n* ", serverState.getValidationErrors() );
+
+                eventBus.publish( new Notification( Notification.Level.ERROR, error ) );
+                throw new IllegalStateException( error );
+            }
         } else {
-            String error = "CodeFlow RequestService: cannot run request as it is null";
+            List<String> validationErrors = authzState.getValidationErrors();
+            String error = "Code Flow Authorization request has errors:" +
+                    ListUtils.joinStringsWith( "\n* ", validationErrors );
             eventBus.publish( new Notification( Notification.Level.ERROR, error ) );
             throw new IllegalStateException( error );
         }

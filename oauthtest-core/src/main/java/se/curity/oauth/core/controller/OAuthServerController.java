@@ -7,6 +7,8 @@ import se.curity.oauth.core.state.OAuthServerState;
 import se.curity.oauth.core.util.Validators;
 import se.curity.oauth.core.util.event.EventBus;
 
+import java.util.List;
+
 public class OAuthServerController {
 
     @FXML
@@ -24,24 +26,27 @@ public class OAuthServerController {
 
     @FXML
     protected void initialize() {
+        Validators.makeValidatableField( baseUrl, Validators::isValidUrl,
+                "The OAuth server baseURL is not a valid URL" );
+
         InvalidationListener invalidationListener = observable ->
                 eventBus.publish( getOAuthServerState() );
 
         baseUrl.textProperty().addListener( invalidationListener );
         authorizeEndpoint.textProperty().addListener( invalidationListener );
         tokenEndpoint.textProperty().addListener( invalidationListener );
-
-        Validators.makeValidatableField( baseUrl, Validators::isValidUrl );
     }
 
     private OAuthServerState getOAuthServerState() {
-        if ( Validators.isValidUrl( baseUrl.getText() ) ) {
+        List<String> errors = Validators.validateFields( baseUrl );
+
+        if ( errors.isEmpty() ) {
             return OAuthServerState.validState(
                     baseUrl.getText(),
                     authorizeEndpoint.getText(),
                     tokenEndpoint.getText() );
         } else {
-            return OAuthServerState.invalid();
+            return OAuthServerState.invalid( errors );
         }
     }
 
