@@ -5,7 +5,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
 <BorderPane xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="io.curity.oauth.core.controller.CodeFlowController">
+            fx:controller="se.curity.oauth.core.controller.CodeFlowController">
     <center>
         <ScrollPane prefHeight="200.0" prefWidth="400.0">
             <content>

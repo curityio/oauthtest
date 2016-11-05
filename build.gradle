@@ -1,4 +1,4 @@
 allprojects {
-    group 'io.curity.oauthtest'
+    group 'se.curity.oauthtest'
     version '1.0-SNAPSHOT'
 }

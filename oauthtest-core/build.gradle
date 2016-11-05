@@ -8,7 +8,7 @@ repositories {
     jcenter()
 }
 
-mainClassName = "io.curity.oauth.core.OAuthTestApplication"
+mainClassName = "se.curity.oauth.core.OAuthTestApplication"
 
 dependencies {
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
