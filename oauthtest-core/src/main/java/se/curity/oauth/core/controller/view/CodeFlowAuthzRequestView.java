@@ -12,7 +12,8 @@ import java.util.List;
 /**
  * Code flow authorization request view.
  */
-public class CodeFlowAuthzRequestView implements CodeFlowController.CodeFlowRequestView {
+public class CodeFlowAuthzRequestView implements CodeFlowController.CodeFlowRequestView
+{
     @FXML
     private TextField responseTypeField;
     @FXML
@@ -25,28 +26,33 @@ public class CodeFlowAuthzRequestView implements CodeFlowController.CodeFlowRequ
     private TextField stateField;
 
     @Override
-    public void setInvalidationListener( InvalidationListener authzFieldChangeListener ) {
-        Validators.makeValidatableField( clientIdField,
-                Validators::isNotEmpty, "client_id cannot be empty" );
+    public void setInvalidationListener(InvalidationListener authzFieldChangeListener)
+    {
+        Validators.makeValidatableField(clientIdField,
+                Validators::isNotEmpty, "client_id cannot be empty");
 
-        responseTypeField.textProperty().addListener( authzFieldChangeListener );
-        clientIdField.textProperty().addListener( authzFieldChangeListener );
-        redirectUriField.textProperty().addListener( authzFieldChangeListener );
-        scopeField.textProperty().addListener( authzFieldChangeListener );
-        stateField.textProperty().addListener( authzFieldChangeListener );
+        responseTypeField.textProperty().addListener(authzFieldChangeListener);
+        clientIdField.textProperty().addListener(authzFieldChangeListener);
+        redirectUriField.textProperty().addListener(authzFieldChangeListener);
+        scopeField.textProperty().addListener(authzFieldChangeListener);
+        stateField.textProperty().addListener(authzFieldChangeListener);
     }
 
-    public CodeFlowAuthzState getCodeFlowAuthzState() {
-        List<String> errors = Validators.validateFields( clientIdField );
-        if ( errors.isEmpty() ) {
+    public CodeFlowAuthzState getCodeFlowAuthzState()
+    {
+        List<String> errors = Validators.validateFields(clientIdField);
+        if (errors.isEmpty())
+        {
             return CodeFlowAuthzState.validState(
                     responseTypeField.getText(),
                     clientIdField.getText(),
                     redirectUriField.getText(),
                     scopeField.getText(),
-                    stateField.getText() );
-        } else {
-            return CodeFlowAuthzState.invalid( errors );
+                    stateField.getText());
+        }
+        else
+        {
+            return CodeFlowAuthzState.invalid(errors);
         }
     }
 

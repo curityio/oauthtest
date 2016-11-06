@@ -11,14 +11,14 @@ repositories {
 mainClassName = "se.curity.oauth.core.OAuthTestApplication"
 
 //create a single, runnable Jar with all dependencies
-task fatJar( type: Jar ) {
+task fatJar(type: Jar) {
     manifest {
         attributes 'Implementation-Title': 'Curity OAuthTest',
                 'Implementation-Version': version,
                 'Main-Class': mainClassName
     }
     archiveName = 'oauthtest-run.jar'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree( it ) } }
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
 

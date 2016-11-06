@@ -26,7 +26,8 @@ import java.util.List;
 /**
  * Implementation of the OAuth code flow logic.
  */
-public class CodeFlowController {
+public class CodeFlowController
+{
 
     @FXML
     private CodeFlowAuthzRequestView authzRequestViewController = null;
@@ -40,95 +41,120 @@ public class CodeFlowController {
     @Nullable
     private OAuthServerState serverState = null;
 
-    public CodeFlowController( EventBus eventBus ) {
+    public CodeFlowController(EventBus eventBus)
+    {
         this.eventBus = eventBus;
     }
 
     @FXML
-    protected void initialize() {
-        eventBus.subscribe( OAuthServerState.class, ( @Nonnull OAuthServerState serverState ) -> {
+    protected void initialize()
+    {
+        eventBus.subscribe(OAuthServerState.class, (@Nonnull OAuthServerState serverState) ->
+        {
             CodeFlowController.this.serverState = serverState;
             updateCurlText();
-        } );
+        });
 
-        authzRequestViewController.setInvalidationListener( observable -> updateCurlText() );
+        authzRequestViewController.setInvalidationListener(observable -> updateCurlText());
 
         // notice that the requestService will run whatever currentRequest is selected
         RequestService requestService = new RequestService();
 
-        arrowsController.setSteps( Arrays.asList(
-                Arrows.Step.create( "Step 1 - Authorization Request", requestService ),
-                Arrows.Step.create( "Step 2 - Access Token Request", requestService )
-        ) );
+        arrowsController.setSteps(Arrays.asList(
+                Arrows.Step.create("Step 1 - Authorization Request", requestService),
+                Arrows.Step.create("Step 2 - Access Token Request", requestService)
+        ));
     }
 
-    private void updateCurlText() {
+    private void updateCurlText()
+    {
         @Nullable HttpRequest request = createRequestIfPossible();
-        if ( request != null ) {
-            curlCommand.setText( request.toCurl() );
-        } else {
-            curlCommand.setText( "" );
+        if (request != null)
+        {
+            curlCommand.setText(request.toCurl());
+        }
+        else
+        {
+            curlCommand.setText("");
         }
     }
 
     @Nullable
-    private HttpRequest createRequestIfPossible() {
+    private HttpRequest createRequestIfPossible()
+    {
         CodeFlowAuthzState codeFlowAuthzState = authzRequestViewController.getCodeFlowAuthzState();
-        if ( codeFlowAuthzState.isValid() && serverState != null && serverState.isValid() ) {
-            return new CodeFlowAuthorizeRequest( serverState, codeFlowAuthzState );
-        } else {
+        if (codeFlowAuthzState.isValid() && serverState != null && serverState.isValid())
+        {
+            return new CodeFlowAuthorizeRequest(serverState, codeFlowAuthzState);
+        }
+        else
+        {
             return null;
         }
     }
 
-    private HttpRequest createRequest() {
+    private HttpRequest createRequest()
+    {
         CodeFlowAuthzState authzState = authzRequestViewController.getCodeFlowAuthzState();
-        if ( authzState.isValid() ) {
-            if ( serverState != null && serverState.isValid() ) {
-                return new CodeFlowAuthorizeRequest( serverState, authzState );
-            } else {
-                String error = ( serverState == null ) ?
+        if (authzState.isValid())
+        {
+            if (serverState != null && serverState.isValid())
+            {
+                return new CodeFlowAuthorizeRequest(serverState, authzState);
+            }
+            else
+            {
+                String error = (serverState == null) ?
                         "OAuth server settings are not available" :
                         "OAuth server settings have errors:" +
-                                ListUtils.joinStringsWith( "\n* ", serverState.getValidationErrors() );
+                                ListUtils.joinStringsWith("\n* ", serverState.getValidationErrors());
 
-                eventBus.publish( new Notification( Notification.Level.ERROR, error ) );
-                throw new IllegalStateException( error );
+                eventBus.publish(new Notification(Notification.Level.ERROR, error));
+                throw new IllegalStateException(error);
             }
-        } else {
+        }
+        else
+        {
             List<String> validationErrors = authzState.getValidationErrors();
             String error = "Code Flow Authorization request has errors:" +
-                    ListUtils.joinStringsWith( "\n* ", validationErrors );
-            eventBus.publish( new Notification( Notification.Level.ERROR, error ) );
-            throw new IllegalStateException( error );
+                    ListUtils.joinStringsWith("\n* ", validationErrors);
+            eventBus.publish(new Notification(Notification.Level.ERROR, error));
+            throw new IllegalStateException(error);
         }
     }
 
-    private void onResponse( ClientResponse response ) {
-        eventBus.publish( new HttpResponseEvent( response ) );
-        Platform.runLater( () -> {
+    private void onResponse(ClientResponse response)
+    {
+        eventBus.publish(new HttpResponseEvent(response));
+        Platform.runLater(() ->
+        {
             // TODO set the parameters that get calculated
-        } );
+        });
     }
 
-    private class RequestService extends Service<ClientResponse> {
+    private class RequestService extends Service<ClientResponse>
+    {
 
         @Override
-        protected Task<ClientResponse> createTask() {
+        protected Task<ClientResponse> createTask()
+        {
             final HttpRequest request = createRequest();
-            return new Task<ClientResponse>() {
+            return new Task<ClientResponse>()
+            {
                 @Override
-                protected ClientResponse call() throws Exception {
+                protected ClientResponse call() throws Exception
+                {
                     ClientResponse response = request.send();
-                    onResponse( response );
+                    onResponse(response);
                     return response;
                 }
             };
         }
     }
 
-    public interface CodeFlowRequestView {
-        void setInvalidationListener( InvalidationListener listener );
+    public interface CodeFlowRequestView
+    {
+        void setInvalidationListener(InvalidationListener listener);
     }
 
 }

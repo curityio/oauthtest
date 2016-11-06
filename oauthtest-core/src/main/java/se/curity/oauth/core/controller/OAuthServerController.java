@@ -1,13 +1,11 @@
 package se.curity.oauth.core.controller;
 
-import javafx.stage.Stage;
-import se.curity.oauth.core.state.OAuthServerState;
-import se.curity.oauth.core.util.PreferencesUtils;
-import se.curity.oauth.core.util.event.EventBus;
 import javafx.beans.InvalidationListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import javafx.stage.Stage;
 import se.curity.oauth.core.state.OAuthServerState;
+import se.curity.oauth.core.util.PreferencesUtils;
 import se.curity.oauth.core.util.Validators;
 import se.curity.oauth.core.util.event.EventBus;
 
@@ -40,8 +38,8 @@ public class OAuthServerController
     @FXML
     protected void initialize()
     {
-        Validators.makeValidatableField( baseUrl, Validators::isValidUrl,
-                "The OAuth server baseURL is not a valid URL" );
+        Validators.makeValidatableField(baseUrl, Validators::isValidUrl,
+                "The OAuth server baseURL is not a valid URL");
 
         baseUrl.setText(_initialOAuthServerState.getBaseUrl());
         tokenEndpoint.setText(_initialOAuthServerState.getAuthorizeEndpoint());
@@ -55,16 +53,20 @@ public class OAuthServerController
         tokenEndpoint.textProperty().addListener(invalidationListener);
     }
 
-    private OAuthServerState getOAuthServerState() {
-        List<String> errors = Validators.validateFields( baseUrl );
+    private OAuthServerState getOAuthServerState()
+    {
+        List<String> errors = Validators.validateFields(baseUrl);
 
-        if ( errors.isEmpty() ) {
+        if (errors.isEmpty())
+        {
             return OAuthServerState.validState(
                     baseUrl.getText(),
                     authorizeEndpoint.getText(),
-                    tokenEndpoint.getText() );
-        } else {
-            return OAuthServerState.invalid( errors );
+                    tokenEndpoint.getText());
+        }
+        else
+        {
+            return OAuthServerState.invalid(errors);
         }
     }
 

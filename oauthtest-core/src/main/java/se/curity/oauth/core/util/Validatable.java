@@ -7,19 +7,23 @@ import java.util.List;
  * <p>
  * A Validatable object must be immutable and know if it contains any errors at construction time.
  */
-public abstract class Validatable {
+public abstract class Validatable
+{
 
     private final List<String> errors;
 
-    protected Validatable( List<String> errors ) {
+    protected Validatable(List<String> errors)
+    {
         this.errors = errors;
     }
 
-    public boolean isValid() {
+    public boolean isValid()
+    {
         return errors.isEmpty();
     }
 
-    public List<String> getValidationErrors() {
+    public List<String> getValidationErrors()
+    {
         return errors;
     }
 
