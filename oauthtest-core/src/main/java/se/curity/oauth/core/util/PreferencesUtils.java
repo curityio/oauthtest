@@ -23,7 +23,7 @@ public class PreferencesUtils
         String authorizeEndpoint = _preferences.get(AUTHZ_ENDPOINT_PREFERENCE_KEY, AUTHZ_ENDPOINT);
         String tokenEndpoint = _preferences.get(TOKEN_ENDPOINT_PREFERENCE_KEY, TOKEN_ENDPOINT);
 
-        return new OAuthServerState(baseUrl, authorizeEndpoint, tokenEndpoint);
+        return OAuthServerState.validState(baseUrl, authorizeEndpoint, tokenEndpoint);
     }
 
     public static void putOAuthServerPreferences(OAuthServerState oauthServerState)

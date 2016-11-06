@@ -10,30 +10,36 @@ import java.util.concurrent.ThreadFactory;
 /**
  *
  */
-public class Workers {
+public class Workers
+{
 
-    private static final Thread.UncaughtExceptionHandler defaultExceptionHandler = ( t, e ) -> {
-        System.err.println( "Error on Thread: " + t.getName() );
+    private static final Thread.UncaughtExceptionHandler defaultExceptionHandler = (t, e) ->
+    {
+        System.err.println("Error on Thread: " + t.getName());
         e.printStackTrace();
     };
 
-    private final ThreadFactory threadFactory = r -> {
-        Thread t = new Thread( r );
-        t.setDaemon( true );
-        t.setUncaughtExceptionHandler( defaultExceptionHandler );
+    private final ThreadFactory threadFactory = r ->
+    {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        t.setUncaughtExceptionHandler(defaultExceptionHandler);
         return t;
     };
 
-    private final ExecutorService executor = Executors.newCachedThreadPool( threadFactory );
+    private final ExecutorService executor = Executors.newCachedThreadPool(threadFactory);
 
-    public <T> Service<T> createService( Task<T> runnable ) {
-        Service<T> service = new Service<T>() {
+    public <T> Service<T> createService(Task<T> runnable)
+    {
+        Service<T> service = new Service<T>()
+        {
             @Override
-            protected Task<T> createTask() {
+            protected Task<T> createTask()
+            {
                 return runnable;
             }
         };
-        service.setExecutor( executor );
+        service.setExecutor(executor);
         return service;
     }
 

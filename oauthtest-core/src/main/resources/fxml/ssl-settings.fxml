@@ -25,7 +25,7 @@
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
             </rowConstraints>
             <children>
-                <Label text="Trust store file" />
+                <Label text="Trust store file"/>
                 <Label text="Trust store password" GridPane.rowIndex="1"/>
                 <TextField fx:id="trustStoreFile" GridPane.columnIndex="1"/>
                 <TextField fx:id="trustStorePassword" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
