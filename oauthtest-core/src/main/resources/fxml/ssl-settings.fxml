@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 <BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="se.curity.oauth.core.controller.OAuthServerController">
+            fx:controller="se.curity.oauth.core.controller.SettingsController">
     <center>
         <GridPane hgap="5.0" vgap="5.0">
             <columnConstraints>
@@ -25,10 +25,10 @@
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
             </rowConstraints>
             <children>
-                <Label text="Trust store file"/>
+                <Label text="Trust store file" />
                 <Label text="Trust store password" GridPane.rowIndex="1"/>
-                <TextField fx:id="baseUrl" GridPane.columnIndex="1"/>
-                <TextField fx:id="authorizeEndpoint" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <TextField fx:id="trustStoreFile" GridPane.columnIndex="1"/>
+                <TextField fx:id="trustStorePassword" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
                 <ImageView fitHeight="16.0" fitWidth="16.0" nodeOrientation="INHERIT" pickOnBounds="true"
                            preserveRatio="true" GridPane.columnIndex="2">
                     <image>
@@ -48,7 +48,7 @@
                     </GridPane.margin>
                 </ImageView>
                 <Label text="Keystore file" GridPane.rowIndex="2"/>
-                <TextField fx:id="tokenEndpoint" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <TextField fx:id="keystoreFile" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
                 <ImageView fitHeight="16.0" fitWidth="16.0" nodeOrientation="INHERIT" pickOnBounds="true"
                            preserveRatio="true" GridPane.columnIndex="2" GridPane.rowIndex="2">
                     <image>
@@ -59,7 +59,7 @@
                     </GridPane.margin>
                 </ImageView>
                 <Label text="Keystore password" GridPane.rowIndex="3"/>
-                <TextField fx:id="tokenEndpoint1" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                <TextField fx:id="keystorePassword" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
                 <ImageView fitHeight="16.0" fitWidth="16.0" nodeOrientation="INHERIT" pickOnBounds="true"
                            preserveRatio="true" GridPane.columnIndex="2" GridPane.rowIndex="3">
                     <image>

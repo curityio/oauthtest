@@ -1,6 +1,7 @@
 package se.curity.oauth.core;
 
 import se.curity.oauth.core.component.MessagePopup;
+import se.curity.oauth.core.util.PreferencesUtils;
 import se.curity.oauth.core.util.Workers;
 import se.curity.oauth.core.util.event.EventBus;
 import javafx.stage.Stage;
@@ -18,6 +19,7 @@ class ApplicationContainer {
     ApplicationContainer( Stage primaryStage ) {
         container.addComponent( new Workers() );
         container.addComponent( new EventBus() );
+        container.addComponent(PreferencesUtils.getOAuthServerPreferences());
         container.addComponent( primaryStage );
         container.as( Characteristics.CACHE )
                 .addComponent( MessagePopup.class )
@@ -28,8 +30,7 @@ class ApplicationContainer {
     Object get( Class<?> type ) {
         Object instance = container.getComponent( type );
         if ( instance == null ) {
-            container.addComponent( type );
-            return container.getComponent( type );
+            return container.addComponent( type ).getComponent( type );
         } else {
             return instance;
         }

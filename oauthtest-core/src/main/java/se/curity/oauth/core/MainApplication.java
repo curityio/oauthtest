@@ -11,7 +11,7 @@ import javafx.util.BuilderFactory;
 /**
  * The OAuth-Test JavaFX Application.
  */
-public class OAuthTestApplication extends Application {
+public class MainApplication extends Application {
 
     public static void main( String[] args ) {
         launch( args );
@@ -28,7 +28,7 @@ public class OAuthTestApplication extends Application {
                 builderFactory,
                 new ApplicationContainer( primaryStage )::get );
 
-        primaryStage.setScene( new Scene( oauthFlows, 600, 600 ) );
+        primaryStage.setScene( new Scene( oauthFlows, 600, 700 ) );
         primaryStage.show();
     }
 }
