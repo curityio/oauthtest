@@ -3,6 +3,7 @@ package se.curity.oauth.core.request;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.jersey.core.util.UnmodifiableMultivaluedMap;
 import se.curity.oauth.core.util.MapBuilder;
 import se.curity.oauth.core.util.event.Event;
@@ -109,6 +110,33 @@ public abstract class HttpRequest implements Event
     {
         return new MapBuilder<String, Object>()
                 .put("Accept", "application/json");
+    }
+
+    public static MultivaluedMap<String, String> parseQueryParameters(@Nullable String query)
+    {
+        MultivaluedMap<String, String> queryParameters = new MultivaluedMapImpl();
+
+        if (query == null || query.isEmpty())
+        {
+            return queryParameters;
+        }
+
+        for (String part : query.split("&"))
+        {
+            int equalsIndex = part.indexOf('=');
+            if (equalsIndex < 0)
+            {
+                queryParameters.putSingle(part, "");
+            }
+            else
+            {
+                String key = part.substring(0, equalsIndex);
+                String value = part.substring(equalsIndex);
+                queryParameters.putSingle(key, value);
+            }
+        }
+
+        return queryParameters;
     }
 
     @Override

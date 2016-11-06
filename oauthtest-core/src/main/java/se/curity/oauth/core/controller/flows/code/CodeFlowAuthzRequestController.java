@@ -1,9 +1,8 @@
-package se.curity.oauth.core.controller.view;
+package se.curity.oauth.core.controller.flows.code;
 
 import javafx.beans.InvalidationListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
-import se.curity.oauth.core.controller.CodeFlowController;
 import se.curity.oauth.core.state.CodeFlowAuthzState;
 import se.curity.oauth.core.util.Validators;
 
@@ -12,7 +11,7 @@ import java.util.List;
 /**
  * Code flow authorization request view.
  */
-public class CodeFlowAuthzRequestView implements CodeFlowController.CodeFlowRequestView
+public class CodeFlowAuthzRequestController implements CodeFlowController.CodeFlowRequestController
 {
     @FXML
     private TextField responseTypeField;

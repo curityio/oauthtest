@@ -10,6 +10,8 @@ import javax.ws.rs.core.MultivaluedMap;
 public class CodeFlowAuthorizeRequest extends HttpRequest
 {
 
+    private final CodeFlowAuthzState _state;
+
     public CodeFlowAuthorizeRequest(OAuthServerState serverState, CodeFlowAuthzState state)
     {
         super(HttpMethod.GET,
@@ -17,6 +19,12 @@ public class CodeFlowAuthorizeRequest extends HttpRequest
                 serverState.getAuthorizeEndpoint(),
                 oauthBasicHeaders().getMap(),
                 queryParameters(state));
+        _state = state;
+    }
+
+    public CodeFlowAuthzState getState()
+    {
+        return _state;
     }
 
     private static MultivaluedMap<String, String> queryParameters(CodeFlowAuthzState state)
