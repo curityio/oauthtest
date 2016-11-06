@@ -5,7 +5,7 @@ import se.curity.oauth.core.state.OAuthServerState;
 
 import java.util.prefs.Preferences;
 
-public class PreferencesUtils
+public final class PreferencesUtils
 {
     private static final Preferences _preferences = Preferences.userNodeForPackage(MainApplication.class);
 
@@ -17,7 +17,7 @@ public class PreferencesUtils
     private static final String TOKEN_ENDPOINT = "/oauth/token";
     private static final String AUTHZ_ENDPOINT = "/oauth/authorize";
 
-    public static OAuthServerState getOAuthServerPreferences()
+    public OAuthServerState getOAuthServerPreferences()
     {
         String baseUrl = _preferences.get(BASE_URL_PREFERENCE_KEY, BASE_URL);
         String authorizeEndpoint = _preferences.get(AUTHZ_ENDPOINT_PREFERENCE_KEY, AUTHZ_ENDPOINT);
@@ -26,7 +26,7 @@ public class PreferencesUtils
         return OAuthServerState.validState(baseUrl, authorizeEndpoint, tokenEndpoint);
     }
 
-    public static void putOAuthServerPreferences(OAuthServerState oauthServerState)
+    public void putOAuthServerPreferences(OAuthServerState oauthServerState)
     {
         _preferences.put(BASE_URL_PREFERENCE_KEY, oauthServerState.getBaseUrl());
         _preferences.put(AUTHZ_ENDPOINT_PREFERENCE_KEY, oauthServerState.getAuthorizeEndpoint());

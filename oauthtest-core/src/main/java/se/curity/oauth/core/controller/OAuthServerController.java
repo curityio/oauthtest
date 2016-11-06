@@ -13,7 +13,6 @@ import java.util.List;
 
 public class OAuthServerController
 {
-    private final OAuthServerState _initialOAuthServerState;
 
     @FXML
     private TextField baseUrl;
@@ -25,14 +24,17 @@ public class OAuthServerController
     private TextField tokenEndpoint;
 
     private final EventBus _eventBus;
+    private final PreferencesUtils _preferencesUtils;
 
-    public OAuthServerController(EventBus eventBus, OAuthServerState oauthServerState, Stage primaryStage)
+    public OAuthServerController(EventBus eventBus,
+                                 Stage primaryStage,
+                                 PreferencesUtils preferencesUtils)
     {
         _eventBus = eventBus;
-        _initialOAuthServerState = oauthServerState;
+        _preferencesUtils = preferencesUtils;
 
         primaryStage.setOnCloseRequest(e ->
-                PreferencesUtils.putOAuthServerPreferences(getOAuthServerState()));
+                _preferencesUtils.putOAuthServerPreferences(getOAuthServerState()));
     }
 
     @FXML
@@ -41,9 +43,16 @@ public class OAuthServerController
         Validators.makeValidatableField(baseUrl, Validators::isValidUrl,
                 "The OAuth server baseURL is not a valid URL");
 
-        baseUrl.setText(_initialOAuthServerState.getBaseUrl());
-        tokenEndpoint.setText(_initialOAuthServerState.getAuthorizeEndpoint());
-        authorizeEndpoint.setText(_initialOAuthServerState.getTokenEndpoint());
+        // set the server's initial state and publish that information
+        {
+            OAuthServerState initialOAuthServerState = _preferencesUtils.getOAuthServerPreferences();
+
+            baseUrl.setText(initialOAuthServerState.getBaseUrl());
+            tokenEndpoint.setText(initialOAuthServerState.getAuthorizeEndpoint());
+            authorizeEndpoint.setText(initialOAuthServerState.getTokenEndpoint());
+
+            _eventBus.publish(initialOAuthServerState);
+        }
 
         InvalidationListener invalidationListener = observable ->
                 _eventBus.publish(getOAuthServerState());

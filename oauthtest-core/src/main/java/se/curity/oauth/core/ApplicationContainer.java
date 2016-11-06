@@ -21,7 +21,7 @@ class ApplicationContainer
     {
         container.addComponent(new Workers());
         container.addComponent(new EventBus());
-        container.addComponent(PreferencesUtils.getOAuthServerPreferences());
+        container.addComponent(new PreferencesUtils());
         container.addComponent(primaryStage);
         container.as(Characteristics.CACHE)
                 .addComponent(MessagePopup.class)
