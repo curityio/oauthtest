@@ -1,12 +1,13 @@
 package se.curity.oauth.core.controller;
 
-import com.sun.jersey.api.client.ClientResponse;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.TextArea;
 import se.curity.oauth.core.controller.flows.code.CodeFlowController;
 import se.curity.oauth.core.request.HttpResponseEvent;
 import se.curity.oauth.core.util.event.EventBus;
+
+import javax.ws.rs.core.Response;
 
 public class MainController
 {
@@ -30,11 +31,13 @@ public class MainController
     {
         eventBus.subscribe(HttpResponseEvent.class, responseEvent ->
         {
-            ClientResponse response = responseEvent.getResponse();
+            Response response = responseEvent.getResponse();
 
             System.out.println("RESPONSE: " + responseEvent.getResponse());
-            String responseText = responseEvent.getResponse().getEntity(String.class);
-            String statusLine = "STATUS: " + response.getStatus() + " - " + response.getStatusInfo().getReasonPhrase();
+            String responseText = (response.hasEntity() ?
+                    responseEvent.getResponse().readEntity(String.class) : "");
+            String statusLine = "STATUS: " + response.getStatus() + " - " +
+                    response.getStatusInfo().getReasonPhrase();
             String headers = "HEADERS: " + response.getHeaders().toString();
 
             currentResponse.setText(statusLine + "\n" + headers + "\n" + responseText);

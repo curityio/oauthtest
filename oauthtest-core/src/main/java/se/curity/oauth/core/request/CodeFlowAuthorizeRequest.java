@@ -1,10 +1,10 @@
 package se.curity.oauth.core.request;
 
-import com.sun.jersey.core.util.StringKeyStringValueIgnoreCaseMultivaluedMap;
 import se.curity.oauth.core.state.CodeFlowAuthzState;
 import se.curity.oauth.core.state.OAuthServerState;
 
 import javax.ws.rs.HttpMethod;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 
 public class CodeFlowAuthorizeRequest extends HttpRequest
@@ -14,6 +14,7 @@ public class CodeFlowAuthorizeRequest extends HttpRequest
 
     public CodeFlowAuthorizeRequest(OAuthServerState serverState, CodeFlowAuthzState state)
     {
+        // TODO turn off follow-redirects!
         super(HttpMethod.GET,
                 serverState.getBaseUrl(),
                 serverState.getAuthorizeEndpoint(),
@@ -29,20 +30,20 @@ public class CodeFlowAuthorizeRequest extends HttpRequest
 
     private static MultivaluedMap<String, String> queryParameters(CodeFlowAuthzState state)
     {
-        StringKeyStringValueIgnoreCaseMultivaluedMap result =
-                new StringKeyStringValueIgnoreCaseMultivaluedMap();
+        MultivaluedMap<String, String> result =
+                new MultivaluedHashMap<>();
 
-        result.putSingleObject("response_type", state.getResponseType());
+        result.putSingle("response_type", state.getResponseType());
 
         String clientId = state.getClientId();
         String redirectUri = state.getRedirectUri();
         String scope = state.getScope();
         String stateParam = state.getState();
 
-        if (!clientId.isEmpty()) result.putSingleObject("client_id", clientId);
-        if (!redirectUri.isEmpty()) result.putSingleObject("redirect_uri", redirectUri);
-        if (!scope.isEmpty()) result.putSingleObject("scope", scope);
-        if (!stateParam.isEmpty()) result.putSingleObject("state", stateParam);
+        if (!clientId.isEmpty()) result.putSingle("client_id", clientId);
+        if (!redirectUri.isEmpty()) result.putSingle("redirect_uri", redirectUri);
+        if (!scope.isEmpty()) result.putSingle("scope", scope);
+        if (!stateParam.isEmpty()) result.putSingle("state", stateParam);
 
         return result;
     }

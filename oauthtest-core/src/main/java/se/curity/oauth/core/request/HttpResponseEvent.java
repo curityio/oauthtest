@@ -1,7 +1,8 @@
 package se.curity.oauth.core.request;
 
-import com.sun.jersey.api.client.ClientResponse;
 import se.curity.oauth.core.util.event.Event;
+
+import javax.ws.rs.core.Response;
 
 /**
  * Simple ClientResponse Wrapper class that allows responses to be published on the EventBus.
@@ -9,15 +10,15 @@ import se.curity.oauth.core.util.event.Event;
 public class HttpResponseEvent implements Event
 {
 
-    private final ClientResponse response;
+    private final Response _response;
 
-    public HttpResponseEvent(ClientResponse response)
+    public HttpResponseEvent(Response response)
     {
-        this.response = response;
+        this._response = response;
     }
 
-    public ClientResponse getResponse()
+    public Response getResponse()
     {
-        return response;
+        return _response;
     }
 }

@@ -1,19 +1,27 @@
 package se.curity.oauth.core.request;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import com.sun.jersey.core.util.UnmodifiableMultivaluedMap;
+import org.glassfish.jersey.SslConfigurator;
+import org.glassfish.jersey.internal.util.collection.ImmutableMultivaluedMap;
+import se.curity.oauth.core.state.SslState;
 import se.curity.oauth.core.util.MapBuilder;
+import se.curity.oauth.core.util.UnsafeSSLContextProvider;
 import se.curity.oauth.core.util.event.Event;
 
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLContext;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -31,7 +39,7 @@ public abstract class HttpRequest implements Event
     private final MultivaluedMap<String, String> query;
 
     @Nullable
-    private final String body;
+    private final Entity<?> _entity;
 
     private final Function<Object, String> urlEncoder = obj ->
     {
@@ -59,40 +67,76 @@ public abstract class HttpRequest implements Event
                 String path,
                 Map<String, Object> headers,
                 MultivaluedMap<String, String> query,
-                @Nullable String body)
+                @Nullable Entity<?> entity)
     {
         this.method = method;
         this.baseUrl = baseUrl;
         this.path = path;
         this.headers = Collections.unmodifiableMap(headers);
-        this.query = new UnmodifiableMultivaluedMap<>(query);
-        this.body = body;
+        this.query = new ImmutableMultivaluedMap<>(query);
+        _entity = entity;
     }
 
-    public ClientResponse send()
+    public Response send(@Nullable SslState sslState)
     {
-        Client client = Client.create();
-        WebResource.Builder requestBuilder = client
-                .resource(baseUrl)
-                .path(path)
-                .queryParams(query)
-                .getRequestBuilder();
+        Client client = createClientWith(sslState);
 
-        for (Map.Entry<String, Object> header : headers.entrySet())
+        WebTarget target = client.target(baseUrl).path(path);
+
+        for (Map.Entry<String, List<String>> parameterEntry : query.entrySet())
         {
-            requestBuilder = requestBuilder.header(header.getKey(), header.getValue());
+            for (String value : parameterEntry.getValue())
+            {
+                target = target.queryParam(parameterEntry.getKey(), value);
+            }
         }
 
-        return (body == null) ?
-                requestBuilder.method(method, ClientResponse.class) :
-                requestBuilder.method(method, ClientResponse.class, body);
+        System.out.println("Request target: " + target);
+
+        Invocation.Builder requestBuilder = target.request();
+
+        headers.forEach(requestBuilder::header);
+
+        return (_entity == null) ?
+                requestBuilder.method(method) :
+                requestBuilder.method(method, _entity);
     }
 
-    public String toCurl()
+    private Client createClientWith(@Nullable SslState sslState)
     {
+        if (sslState == null)
+        {
+            return ClientBuilder.newClient();
+        }
+
+        SSLContext sslContext;
+
+        if (sslState.isIgnoreSSL())
+        {
+            sslContext = UnsafeSSLContextProvider.getInstance().get();
+        }
+        else
+        {
+            sslContext = SslConfigurator.newInstance()
+                    .trustStoreFile(sslState.getTrustStoreFile())
+                    .trustStorePassword(sslState.getTrustStorePassword())
+                    .keyStoreFile(sslState.getKeystoreFile())
+                    .keyPassword(sslState.getKeystorePassword())
+                    .createSSLContext();
+        }
+
+        return ClientBuilder.newBuilder().sslContext(sslContext).build();
+    }
+
+    public String toCurl(@Nullable SslState sslState)
+    {
+        List<String> commandParts = new ArrayList<>();
+
         String curlHeaders = String.join(" ", headers.entrySet().stream()
                 .map(it -> "-H \"" + it.getKey() + ": " + it.getValue() + "\"")
                 .collect(Collectors.toList()));
+
+        String sslOption = (sslState != null && sslState.isIgnoreSSL()) ? "-k" : "";
 
         String queryString = query.isEmpty() ? "" :
                 "?" + String.join("&", query.entrySet().stream()
@@ -103,7 +147,16 @@ public abstract class HttpRequest implements Event
         String absolutePath = path.startsWith("/") ? path : "/" + path;
         String fullUrl = "\"" + baseUrl + absolutePath + queryString + "\"";
 
-        return String.join(" ", Arrays.asList("curl -X", method, curlHeaders, fullUrl));
+        commandParts.add("curl -X");
+        commandParts.add(method);
+        if (!sslOption.isEmpty())
+        {
+            commandParts.add(sslOption);
+        }
+        commandParts.add(curlHeaders);
+        commandParts.add(fullUrl);
+
+        return String.join(" ", commandParts);
     }
 
     static MapBuilder<String, Object> oauthBasicHeaders()
@@ -114,7 +167,7 @@ public abstract class HttpRequest implements Event
 
     public static MultivaluedMap<String, String> parseQueryParameters(@Nullable String query)
     {
-        MultivaluedMap<String, String> queryParameters = new MultivaluedMapImpl();
+        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
 
         if (query == null || query.isEmpty())
         {
@@ -148,7 +201,7 @@ public abstract class HttpRequest implements Event
                 ", path='" + path + '\'' +
                 ", headers=" + headers +
                 ", query=" + query +
-                ", body='" + body + '\'' +
+                ", entity='" + _entity + '\'' +
                 '}';
     }
 }

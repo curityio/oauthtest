@@ -1,6 +1,5 @@
 package se.curity.oauth.core.controller.flows.code;
 
-import com.sun.jersey.api.client.ClientResponse;
 import javafx.beans.InvalidationListener;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -12,6 +11,7 @@ import se.curity.oauth.core.request.HttpRequest;
 import se.curity.oauth.core.request.HttpResponseEvent;
 import se.curity.oauth.core.state.CodeFlowAuthzState;
 import se.curity.oauth.core.state.OAuthServerState;
+import se.curity.oauth.core.state.SslState;
 import se.curity.oauth.core.util.ListUtils;
 import se.curity.oauth.core.util.event.EventBus;
 import se.curity.oauth.core.util.event.Notification;
@@ -19,6 +19,7 @@ import se.curity.oauth.core.util.event.Notification;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -44,6 +45,9 @@ public class CodeFlowController
     @Nullable
     private OAuthServerState serverState = null;
 
+    @Nullable
+    private SslState _sslState = null;
+
     public CodeFlowController(EventBus eventBus)
     {
         this.eventBus = eventBus;
@@ -55,6 +59,12 @@ public class CodeFlowController
         eventBus.subscribe(OAuthServerState.class, (@Nonnull OAuthServerState serverState) ->
         {
             CodeFlowController.this.serverState = serverState;
+            updateCurlText();
+        });
+
+        eventBus.subscribe(SslState.class, (@Nonnull SslState sslState) ->
+        {
+            _sslState = sslState;
             updateCurlText();
         });
 
@@ -74,7 +84,7 @@ public class CodeFlowController
         @Nullable HttpRequest request = createRequestIfPossible();
         if (request != null)
         {
-            curlCommand.setText(request.toCurl());
+            curlCommand.setText(request.toCurl(_sslState));
         }
         else
         {
@@ -134,7 +144,7 @@ public class CodeFlowController
      * @return null if success, or an error message if the response is not successful.
      */
     @Nullable
-    private String onResponse(HttpRequest request, ClientResponse response)
+    private String onResponse(HttpRequest request, Response response)
     {
         // always publish the response anyway
         eventBus.publish(new HttpResponseEvent(response));
@@ -149,7 +159,7 @@ public class CodeFlowController
     }
 
     @Nullable
-    private String checkAuthorizeRequestResponse(CodeFlowAuthorizeRequest request, ClientResponse response)
+    private String checkAuthorizeRequestResponse(CodeFlowAuthorizeRequest request, Response response)
     {
         if (response.getStatus() != 302)
         {
@@ -159,7 +169,7 @@ public class CodeFlowController
                     response.getStatus());
         }
 
-        List<String> locationHeaders = response.getHeaders().get("Location");
+        List<Object> locationHeaders = response.getHeaders().get("Location");
 
         if (locationHeaders == null || locationHeaders.size() != 1)
         {
@@ -175,7 +185,7 @@ public class CodeFlowController
 
         try
         {
-            redirectUri = new URI(locationHeaders.get(0));
+            redirectUri = new URI(locationHeaders.get(0).toString());
         }
         catch (URISyntaxException e)
         {
@@ -247,19 +257,21 @@ public class CodeFlowController
         return null;
     }
 
-    private class RequestService extends Service<ClientResponse>
+    private class RequestService extends Service<Response>
     {
 
         @Override
-        protected Task<ClientResponse> createTask()
+        protected Task<Response> createTask()
         {
             final HttpRequest request = createRequest();
-            return new Task<ClientResponse>()
+            final @Nullable SslState sslState = _sslState;
+
+            return new Task<Response>()
             {
                 @Override
-                protected ClientResponse call() throws Exception
+                protected Response call() throws Exception
                 {
-                    ClientResponse response = request.send();
+                    Response response = request.send(sslState);
                     @Nullable String error = onResponse(request, response);
 
                     if (error == null)
