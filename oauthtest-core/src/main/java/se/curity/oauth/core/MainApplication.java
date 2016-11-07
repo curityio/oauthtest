@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.JavaFXBuilderFactory;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.util.BuilderFactory;
 
@@ -31,7 +32,11 @@ public class MainApplication extends Application
                 builderFactory,
                 new ApplicationContainer(primaryStage)::get);
 
-        primaryStage.setScene(new Scene(oauthFlows, 600, 700));
+        primaryStage.setScene(new Scene(oauthFlows, 850, 700));
+
+        primaryStage.getIcons().addAll(
+                new Image(getClass().getResourceAsStream("/images/favicon.png")));
+
         primaryStage.show();
     }
 }
