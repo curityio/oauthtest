@@ -8,7 +8,7 @@ repositories {
     jcenter()
 }
 
-mainClassName = "se.curity.oauth.core.OAuthTestApplication"
+mainClassName = "se.curity.oauth.core.MainApplication"
 
 //create a single, runnable Jar with all dependencies
 task fatJar(type: Jar) {
