@@ -79,7 +79,7 @@ public abstract class HttpRequest implements Event
 
     public Response send(@Nullable SslState sslState)
     {
-        Client client = createClientWith(sslState);
+        Client client = createClientWith(sslState).build();
 
         WebTarget target = client.target(baseUrl).path(path);
 
@@ -102,11 +102,11 @@ public abstract class HttpRequest implements Event
                 requestBuilder.method(method, _entity);
     }
 
-    private Client createClientWith(@Nullable SslState sslState)
+    protected ClientBuilder createClientWith(@Nullable SslState sslState)
     {
         if (sslState == null)
         {
-            return ClientBuilder.newClient();
+            return ClientBuilder.newBuilder();
         }
 
         SSLContext sslContext;
@@ -125,7 +125,7 @@ public abstract class HttpRequest implements Event
                     .createSSLContext();
         }
 
-        return ClientBuilder.newBuilder().sslContext(sslContext).build();
+        return ClientBuilder.newBuilder().sslContext(sslContext);
     }
 
     public String toCurl(@Nullable SslState sslState)
