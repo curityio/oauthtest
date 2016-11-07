@@ -5,7 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import se.curity.oauth.core.state.SslState;
-import se.curity.oauth.core.util.PreferencesUtils;
+import se.curity.oauth.core.util.UserPreferences;
 import se.curity.oauth.core.util.event.EventBus;
 
 public class SslSettingsController
@@ -26,18 +26,18 @@ public class SslSettingsController
     private TextField keystorePassword;
 
     private final EventBus _eventBus;
-    private final PreferencesUtils _preferencesUtils;
+    private final UserPreferences _userPreferences;
 
-    public SslSettingsController(EventBus eventBus, PreferencesUtils preferencesUtils)
+    public SslSettingsController(EventBus eventBus, UserPreferences userPreferences)
     {
         _eventBus = eventBus;
-        _preferencesUtils = preferencesUtils;
+        _userPreferences = userPreferences;
     }
 
     @FXML
     public void initialize()
     {
-        SslState initialSslState = _preferencesUtils.getSslPreferences();
+        SslState initialSslState = _userPreferences.getSslPreferences();
 
         trustStoreFile.setText(initialSslState.getTrustStoreFile());
         trustStorePassword.setText(initialSslState.getTrustStorePassword());

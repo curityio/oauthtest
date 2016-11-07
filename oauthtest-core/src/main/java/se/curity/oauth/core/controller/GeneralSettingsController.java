@@ -4,7 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.stage.Stage;
 import se.curity.oauth.core.state.GeneralState;
-import se.curity.oauth.core.util.PreferencesUtils;
+import se.curity.oauth.core.util.UserPreferences;
 import se.curity.oauth.core.util.event.EventBus;
 
 public class GeneralSettingsController
@@ -13,23 +13,23 @@ public class GeneralSettingsController
     private CheckBox verbose;
 
     private final EventBus _eventBus;
-    private final PreferencesUtils _preferencesUtils;
+    private final UserPreferences _userPreferences;
 
-    public GeneralSettingsController(EventBus eventBus, Stage primaryStage, PreferencesUtils preferencesUtils)
+    public GeneralSettingsController(EventBus eventBus, Stage primaryStage, UserPreferences userPreferences)
     {
         _eventBus = eventBus;
-        _preferencesUtils = preferencesUtils;
+        _userPreferences = userPreferences;
 
         primaryStage.setOnCloseRequest(e ->
         {
-            _preferencesUtils.putGeneralSettings(getGeneralState());
+            _userPreferences.putGeneralSettings(getGeneralState());
         });
     }
 
     @FXML
     public void initialize()
     {
-        GeneralState initialGeneralState = _preferencesUtils.getGeneralPreferences();
+        GeneralState initialGeneralState = _userPreferences.getGeneralPreferences();
 
         verbose.setSelected(initialGeneralState.isVerbose());
 

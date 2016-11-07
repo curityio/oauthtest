@@ -7,7 +7,7 @@ import se.curity.oauth.core.state.SslState;
 
 import java.util.prefs.Preferences;
 
-public final class PreferencesUtils
+public final class UserPreferences
 {
     private static final Preferences _preferences = Preferences.userNodeForPackage(MainApplication.class);
 
