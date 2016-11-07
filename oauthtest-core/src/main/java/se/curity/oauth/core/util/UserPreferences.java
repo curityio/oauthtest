@@ -69,6 +69,10 @@ public final class UserPreferences
 
     public void putSslState(SslState sslState)
     {
-        // TODO
+        _preferences.putBoolean(IGNORE_SSL, sslState.isIgnoreSSL());
+        _preferences.put(TRUSTSTORE_FILE, sslState.getTrustStoreFile());
+        _preferences.put(TRUSTSTORE_PASSWORD, sslState.getTrustStorePassword()); // TODO: Encrypt
+        _preferences.put(KEYSTORE_FILE, sslState.getKeystoreFile());
+        _preferences.put(KEYSTORE_PASSWORD, sslState.getKeystorePassword()); // TODO: Encrypt
     }
 }

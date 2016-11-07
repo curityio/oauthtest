@@ -4,6 +4,7 @@ import javafx.beans.InvalidationListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
+import javafx.stage.Stage;
 import se.curity.oauth.core.state.SslState;
 import se.curity.oauth.core.util.UserPreferences;
 import se.curity.oauth.core.util.event.EventBus;
@@ -28,10 +29,15 @@ public class SslSettingsController
     private final EventBus _eventBus;
     private final UserPreferences _userPreferences;
 
-    public SslSettingsController(EventBus eventBus, UserPreferences userPreferences)
+    public SslSettingsController(EventBus eventBus, Stage primaryStage, UserPreferences userPreferences)
     {
         _eventBus = eventBus;
         _userPreferences = userPreferences;
+
+        primaryStage.setOnCloseRequest(e ->
+        {
+            _userPreferences.putSslState(getSslState());
+        });
     }
 
     @FXML
