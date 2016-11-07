@@ -10,6 +10,7 @@ import se.curity.oauth.core.request.CodeFlowAuthorizeRequest;
 import se.curity.oauth.core.request.HttpRequest;
 import se.curity.oauth.core.request.HttpResponseEvent;
 import se.curity.oauth.core.state.CodeFlowAuthzState;
+import se.curity.oauth.core.state.GeneralState;
 import se.curity.oauth.core.state.OAuthServerState;
 import se.curity.oauth.core.state.SslState;
 import se.curity.oauth.core.util.ListUtils;
@@ -47,6 +48,7 @@ public class CodeFlowController
 
     @Nullable
     private SslState _sslState = null;
+    private GeneralState _generalState;
 
     public CodeFlowController(EventBus eventBus)
     {
@@ -68,6 +70,12 @@ public class CodeFlowController
             updateCurlText();
         });
 
+        eventBus.subscribe(GeneralState.class, (@Nonnull GeneralState generalState) ->
+        {
+            _generalState = generalState;
+            updateCurlText();
+        });
+
         authzRequestViewController.setInvalidationListener(observable -> updateCurlText());
 
         // notice that the requestService will run whatever currentRequest is selected
@@ -84,7 +92,7 @@ public class CodeFlowController
         @Nullable HttpRequest request = createRequestIfPossible();
         if (request != null)
         {
-            curlCommand.setText(request.toCurl(_sslState));
+            curlCommand.setText(request.toCurl(_sslState, _generalState));
         }
         else
         {

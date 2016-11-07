@@ -1,6 +1,7 @@
 package se.curity.oauth.core.util;
 
 import se.curity.oauth.core.MainApplication;
+import se.curity.oauth.core.state.GeneralState;
 import se.curity.oauth.core.state.OAuthServerState;
 import se.curity.oauth.core.state.SslState;
 
@@ -16,8 +17,10 @@ public final class PreferencesUtils
 
     private static final String BASE_URL = "https://localhost:8443";
     private static final String TOKEN_ENDPOINT = "/oauth/token";
-    private static final String AUTHZ_ENDPOINT = "/oauth/authorize";
 
+    private static final String VERBOSE = "VERBOSE";
+
+    private static final String AUTHZ_ENDPOINT = "/oauth/authorize";
     private static final String IGNORE_SSL = "IGNORE_SSL";
     private static final String TRUSTSTORE_FILE = "TRUSTORE_FILE";
     private static final String TRUSTSTORE_PASSWORD = "TRUSTSTORE_PASSWORD";
@@ -52,9 +55,20 @@ public final class PreferencesUtils
         return new SslState(ignoreSSL, trustoreFile, trustorePassword, keystoreFile, keystorePassword);
     }
 
+    public GeneralState getGeneralPreferences()
+    {
+        boolean verbose = _preferences.getBoolean(VERBOSE, true);
+
+        return new GeneralState(verbose);
+    }
+
+    public void putGeneralSettings(GeneralState generalState)
+    {
+        _preferences.putBoolean(VERBOSE, generalState.isVerbose());
+    }
+
     public void putSslState(SslState sslState)
     {
         // TODO
     }
-
 }
