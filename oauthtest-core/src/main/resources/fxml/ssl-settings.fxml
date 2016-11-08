@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -30,7 +31,7 @@
                 <Label text="Trust store file"/>
                 <Label text="Trust store password" GridPane.rowIndex="1"/>
                 <TextField fx:id="trustStoreFile" GridPane.columnIndex="1"/>
-                <TextField fx:id="trustStorePassword" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <PasswordField fx:id="trustStorePassword" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
                 <ImageView fitHeight="16.0" fitWidth="16.0" nodeOrientation="INHERIT" pickOnBounds="true"
                            preserveRatio="true" GridPane.columnIndex="2">
                     <image>
@@ -61,7 +62,7 @@
                     </GridPane.margin>
                 </ImageView>
                 <Label text="Keystore password" GridPane.rowIndex="3"/>
-                <TextField fx:id="keystorePassword" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                <PasswordField fx:id="keystorePassword" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
                 <ImageView fitHeight="16.0" fitWidth="16.0" nodeOrientation="INHERIT" pickOnBounds="true"
                            preserveRatio="true" GridPane.columnIndex="2" GridPane.rowIndex="3">
                     <image>
