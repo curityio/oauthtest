@@ -8,7 +8,7 @@ import java.util.prefs.Preferences;
 
 public final class PreferencesUtils
 {
-    private static final Preferences _preferences = Preferences.userNodeForPackage(MainApplication.class);
+    private final Preferences _preferences = Preferences.userNodeForPackage(MainApplication.class);
 
     private static final String BASE_URL_PREFERENCE_KEY = "BASE_URL";
     private static final String AUTHZ_ENDPOINT_PREFERENCE_KEY = "AUTHZ_ENDPOINT";
