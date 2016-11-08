@@ -121,7 +121,15 @@
                             <center>
                                 <Accordion>
                                     <panes>
-                                        <TitledPane animated="false" text="General"/>
+                                        <TitledPane animated="false" text="General">
+                                            <content>
+                                                <VBox>
+                                                    <children>
+                                                        <fx:include source="general-settings.fxml"/>
+                                                    </children>
+                                                </VBox>
+                                            </content>
+                                        </TitledPane>
                                         <TitledPane animated="false" text="SSL">
                                             <content>
                                                 <VBox>

@@ -1,12 +1,13 @@
 package se.curity.oauth.core.util;
 
 import se.curity.oauth.core.MainApplication;
+import se.curity.oauth.core.state.GeneralState;
 import se.curity.oauth.core.state.OAuthServerState;
 import se.curity.oauth.core.state.SslState;
 
 import java.util.prefs.Preferences;
 
-public final class PreferencesUtils
+public final class UserPreferences
 {
     private static final Preferences _preferences = Preferences.userNodeForPackage(MainApplication.class);
 
@@ -16,8 +17,10 @@ public final class PreferencesUtils
 
     private static final String BASE_URL = "https://localhost:8443";
     private static final String TOKEN_ENDPOINT = "/oauth/token";
-    private static final String AUTHZ_ENDPOINT = "/oauth/authorize";
 
+    private static final String VERBOSE = "VERBOSE";
+
+    private static final String AUTHZ_ENDPOINT = "/oauth/authorize";
     private static final String IGNORE_SSL = "IGNORE_SSL";
     private static final String TRUSTSTORE_FILE = "TRUSTORE_FILE";
     private static final String TRUSTSTORE_PASSWORD = "TRUSTSTORE_PASSWORD";
@@ -52,9 +55,24 @@ public final class PreferencesUtils
         return new SslState(ignoreSSL, trustoreFile, trustorePassword, keystoreFile, keystorePassword);
     }
 
-    public void putSslState(SslState sslState)
+    public GeneralState getGeneralPreferences()
     {
-        // TODO
+        boolean verbose = _preferences.getBoolean(VERBOSE, true);
+
+        return new GeneralState(verbose);
     }
 
+    public void putGeneralSettings(GeneralState generalState)
+    {
+        _preferences.putBoolean(VERBOSE, generalState.isVerbose());
+    }
+
+    public void putSslState(SslState sslState)
+    {
+        _preferences.putBoolean(IGNORE_SSL, sslState.isIgnoreSSL());
+        _preferences.put(TRUSTSTORE_FILE, sslState.getTrustStoreFile());
+        _preferences.put(TRUSTSTORE_PASSWORD, sslState.getTrustStorePassword()); // TODO: Encrypt
+        _preferences.put(KEYSTORE_FILE, sslState.getKeystoreFile());
+        _preferences.put(KEYSTORE_PASSWORD, sslState.getKeystorePassword()); // TODO: Encrypt
+    }
 }

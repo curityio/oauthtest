@@ -2,6 +2,7 @@ package se.curity.oauth.core.request;
 
 import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.internal.util.collection.ImmutableMultivaluedMap;
+import se.curity.oauth.core.state.GeneralState;
 import se.curity.oauth.core.state.SslState;
 import se.curity.oauth.core.util.MapBuilder;
 import se.curity.oauth.core.util.UnsafeSSLContextProvider;
@@ -128,7 +129,7 @@ public abstract class HttpRequest implements Event
         return ClientBuilder.newBuilder().sslContext(sslContext);
     }
 
-    public String toCurl(@Nullable SslState sslState)
+    public String toCurl(@Nullable SslState sslState, @Nullable GeneralState generalState)
     {
         List<String> commandParts = new ArrayList<>();
 
@@ -137,6 +138,7 @@ public abstract class HttpRequest implements Event
                 .collect(Collectors.toList()));
 
         String sslOption = (sslState != null && sslState.isIgnoreSSL()) ? "-k" : "";
+        String verboseOption = (generalState != null && generalState.isVerbose()) ? "-v" : "";
 
         String queryString = query.isEmpty() ? "" :
                 "?" + String.join("&", query.entrySet().stream()
@@ -149,10 +151,17 @@ public abstract class HttpRequest implements Event
 
         commandParts.add("curl -X");
         commandParts.add(method);
+
         if (!sslOption.isEmpty())
         {
             commandParts.add(sslOption);
         }
+
+        if (!verboseOption.isEmpty())
+        {
+            commandParts.add(verboseOption);
+        }
+
         commandParts.add(curlHeaders);
         commandParts.add(fullUrl);
 
