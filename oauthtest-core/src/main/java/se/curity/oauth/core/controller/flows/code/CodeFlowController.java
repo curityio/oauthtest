@@ -1,17 +1,24 @@
 package se.curity.oauth.core.controller.flows.code;
 
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
+import javafx.scene.web.WebView;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import se.curity.oauth.core.component.Arrows;
+import se.curity.oauth.core.component.Browser;
 import se.curity.oauth.core.request.CodeFlowAuthorizeRequest;
 import se.curity.oauth.core.request.HttpRequest;
 import se.curity.oauth.core.request.HttpResponseEvent;
 import se.curity.oauth.core.state.CodeFlowAuthzState;
 import se.curity.oauth.core.state.OAuthServerState;
 import se.curity.oauth.core.state.SslState;
+import se.curity.oauth.core.util.Either;
 import se.curity.oauth.core.util.ListUtils;
 import se.curity.oauth.core.util.event.EventBus;
 import se.curity.oauth.core.util.event.Notification;
@@ -24,6 +31,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 import static se.curity.oauth.core.request.HttpRequest.parseQueryParameters;
 
@@ -40,29 +48,29 @@ public class CodeFlowController
     @FXML
     private TextArea curlCommand = null;
 
-    private final EventBus eventBus;
+    private final EventBus _eventBus;
 
     @Nullable
-    private OAuthServerState serverState = null;
+    private OAuthServerState _oauthServerState = null;
 
     @Nullable
     private SslState _sslState = null;
 
     public CodeFlowController(EventBus eventBus)
     {
-        this.eventBus = eventBus;
+        this._eventBus = eventBus;
     }
 
     @FXML
     protected void initialize()
     {
-        eventBus.subscribe(OAuthServerState.class, (@Nonnull OAuthServerState serverState) ->
+        _eventBus.subscribe(OAuthServerState.class, (@Nonnull OAuthServerState serverState) ->
         {
-            CodeFlowController.this.serverState = serverState;
+            CodeFlowController.this._oauthServerState = serverState;
             updateCurlText();
         });
 
-        eventBus.subscribe(SslState.class, (@Nonnull SslState sslState) ->
+        _eventBus.subscribe(SslState.class, (@Nonnull SslState sslState) ->
         {
             _sslState = sslState;
             updateCurlText();
@@ -96,9 +104,9 @@ public class CodeFlowController
     private HttpRequest createRequestIfPossible()
     {
         CodeFlowAuthzState codeFlowAuthzState = authzRequestViewController.getCodeFlowAuthzState();
-        if (codeFlowAuthzState.isValid() && serverState != null && serverState.isValid())
+        if (codeFlowAuthzState.isValid() && _oauthServerState != null && _oauthServerState.isValid())
         {
-            return new CodeFlowAuthorizeRequest(serverState, codeFlowAuthzState);
+            return new CodeFlowAuthorizeRequest(_oauthServerState, codeFlowAuthzState);
         }
         else
         {
@@ -111,18 +119,18 @@ public class CodeFlowController
         CodeFlowAuthzState authzState = authzRequestViewController.getCodeFlowAuthzState();
         if (authzState.isValid())
         {
-            if (serverState != null && serverState.isValid())
+            if (_oauthServerState != null && _oauthServerState.isValid())
             {
-                return new CodeFlowAuthorizeRequest(serverState, authzState);
+                return new CodeFlowAuthorizeRequest(_oauthServerState, authzState);
             }
             else
             {
-                String error = (serverState == null) ?
+                String error = (_oauthServerState == null) ?
                         "OAuth server settings are not available" :
                         "OAuth server settings have errors:" +
-                                ListUtils.joinStringsWith("\n* ", serverState.getValidationErrors());
+                                ListUtils.joinStringsWith("\n* ", _oauthServerState.getValidationErrors());
 
-                eventBus.publish(new Notification(Notification.Level.ERROR, error));
+                _eventBus.publish(new Notification(Notification.Level.ERROR, error));
                 throw new IllegalStateException(error);
             }
         }
@@ -131,7 +139,7 @@ public class CodeFlowController
             List<String> validationErrors = authzState.getValidationErrors();
             String error = "Code Flow Authorization request has errors:" +
                     ListUtils.joinStringsWith("\n* ", validationErrors);
-            eventBus.publish(new Notification(Notification.Level.ERROR, error));
+            _eventBus.publish(new Notification(Notification.Level.ERROR, error));
             throw new IllegalStateException(error);
         }
     }
@@ -147,15 +155,78 @@ public class CodeFlowController
     private String onResponse(HttpRequest request, Response response)
     {
         // always publish the response anyway
-        eventBus.publish(new HttpResponseEvent(response));
+        _eventBus.publish(new HttpResponseEvent(response));
 
         if (request instanceof CodeFlowAuthorizeRequest)
         {
-            return checkAuthorizeRequestResponse((CodeFlowAuthorizeRequest) request, response);
+            return redirectUserToAuthenticate((CodeFlowAuthorizeRequest) request, response);
         }
         // TODO if (request instanceof CodeFlowTokenRequest)
 
         throw new IllegalStateException("HttpRequest type is not known: " + request);
+    }
+
+    @Nullable
+    private String redirectUserToAuthenticate(CodeFlowAuthorizeRequest request, Response response)
+    {
+        Either<URI, String> redirectResult = validateRedirect(response);
+
+        return redirectResult.onResult(uri ->
+        {
+            Platform.runLater(() ->
+            {
+                WebView webView = new WebView();
+                webView.getEngine().load(uri.toString());
+
+                Stage dialog = new Stage();
+                dialog.setTitle("User Authentication");
+                dialog.initModality(Modality.APPLICATION_MODAL);
+                dialog.initOwner(curlCommand.getScene().getWindow());
+
+                Browser browser = new Browser("Please authenticate to proceed.", uri);
+
+                Scene dialogScene = new Scene(browser, 600, 600);
+                dialog.setScene(dialogScene);
+                dialog.show();
+                System.out.println("USER REDIRECTED TO " + uri);
+            });
+
+            //noinspection ConstantConditions (null is acceptable as a return value)
+            return null;
+        }, Function.identity());
+    }
+
+    private Either<URI, String> validateRedirect(Response response)
+    {
+        if (response.getStatus() != 302)
+        {
+            return Either.failure(String.format(
+                    "The OAuth server was expected to return a 302 status code for the code flow authorize request," +
+                            " but it returned %d instead. Check the server response to see what went wrong.",
+                    response.getStatus()));
+        }
+
+        List<Object> locationHeaders = response.getHeaders().get("Location");
+
+        if (locationHeaders == null || locationHeaders.size() != 1)
+        {
+            String errorSuffix = (locationHeaders == null) ?
+                    "failed to send the Location header, which is mandatory." :
+                    "sent more than one Location header, so it is not possible to know which one to follow!";
+
+            return Either.failure("The OAuth server returned an invalid HTTP response! Although it sent a '302' status code, it " +
+                    errorSuffix);
+        }
+
+        try
+        {
+            return Either.success(new URI(locationHeaders.get(0).toString()));
+        }
+        catch (URISyntaxException e)
+        {
+            return Either.failure(
+                    "The OAuth server tried to redirect the client to an invalid URI:\n" + e.getMessage());
+        }
     }
 
     @Nullable
@@ -252,7 +323,7 @@ public class CodeFlowController
         System.out.println("Redirect URI: " + redirectUri);
 
         // TODO set the Location for the browser to follow
-        //Platform.runLater(() -> eventBus.publish());
+        //Platform.runLater(() -> _eventBus.publish());
 
         return null;
     }

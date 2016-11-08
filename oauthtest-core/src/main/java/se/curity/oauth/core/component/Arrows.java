@@ -108,6 +108,7 @@ public class Arrows
 
                 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
                 Throwable error = event.getSource().getException();
+                error.printStackTrace();
 
                 String errorMessage = (error.getMessage() != null) ?
                         error.getMessage() :
