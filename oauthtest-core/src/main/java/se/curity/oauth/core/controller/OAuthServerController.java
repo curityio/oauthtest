@@ -5,7 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import se.curity.oauth.core.state.OAuthServerState;
-import se.curity.oauth.core.util.PreferencesUtils;
+import se.curity.oauth.core.util.UserPreferences;
 import se.curity.oauth.core.util.Validators;
 import se.curity.oauth.core.util.event.EventBus;
 
@@ -24,17 +24,17 @@ public class OAuthServerController
     private TextField tokenEndpoint;
 
     private final EventBus _eventBus;
-    private final PreferencesUtils _preferencesUtils;
+    private final UserPreferences _userPreferences;
 
     public OAuthServerController(EventBus eventBus,
                                  Stage primaryStage,
-                                 PreferencesUtils preferencesUtils)
+                                 UserPreferences userPreferences)
     {
         _eventBus = eventBus;
-        _preferencesUtils = preferencesUtils;
+        _userPreferences = userPreferences;
 
         primaryStage.setOnCloseRequest(e ->
-                _preferencesUtils.putOAuthServerPreferences(getOAuthServerState()));
+                _userPreferences.putOAuthServerPreferences(getOAuthServerState()));
     }
 
     @FXML
@@ -45,7 +45,7 @@ public class OAuthServerController
 
         // set the server's initial state and publish that information
         {
-            OAuthServerState initialOAuthServerState = _preferencesUtils.getOAuthServerPreferences();
+            OAuthServerState initialOAuthServerState = _userPreferences.getOAuthServerPreferences();
 
             baseUrl.setText(initialOAuthServerState.getBaseUrl());
             tokenEndpoint.setText(initialOAuthServerState.getAuthorizeEndpoint());

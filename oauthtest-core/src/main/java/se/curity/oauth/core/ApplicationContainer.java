@@ -5,7 +5,7 @@ import org.picocontainer.Characteristics;
 import org.picocontainer.DefaultPicoContainer;
 import org.picocontainer.MutablePicoContainer;
 import se.curity.oauth.core.component.MessagePopup;
-import se.curity.oauth.core.util.PreferencesUtils;
+import se.curity.oauth.core.util.UserPreferences;
 import se.curity.oauth.core.util.Workers;
 import se.curity.oauth.core.util.event.EventBus;
 
@@ -21,7 +21,7 @@ class ApplicationContainer
     {
         container.addComponent(new Workers());
         container.addComponent(new EventBus());
-        container.addComponent(new PreferencesUtils());
+        container.addComponent(new UserPreferences());
         container.addComponent(primaryStage);
         container.as(Characteristics.CACHE)
                 .addComponent(MessagePopup.class)
