@@ -78,7 +78,7 @@ public class CodeFlowController
             updateCurlText();
         });
 
-        eventBus.subscribe(GeneralState.class, (@Nonnull GeneralState generalState) ->
+        _eventBus.subscribe(GeneralState.class, (@Nonnull GeneralState generalState) ->
         {
             _generalState = generalState;
             updateCurlText();
@@ -191,7 +191,7 @@ public class CodeFlowController
                 dialog.initModality(Modality.APPLICATION_MODAL);
                 dialog.initOwner(curlCommand.getScene().getWindow());
 
-                Browser browser = new Browser("Please authenticate to proceed.", uri);
+                Browser browser = new Browser("Please authenticate to proceed.", uri, _eventBus);
 
                 Scene dialogScene = new Scene(browser, 600, 600);
                 dialog.setScene(dialogScene);

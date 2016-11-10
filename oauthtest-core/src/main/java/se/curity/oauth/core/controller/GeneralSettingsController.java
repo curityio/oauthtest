@@ -27,7 +27,7 @@ public class GeneralSettingsController
     }
 
     @FXML
-    public void initialize()
+    protected void initialize()
     {
         GeneralState initialGeneralState = _userPreferences.getGeneralPreferences();
 
@@ -35,7 +35,7 @@ public class GeneralSettingsController
 
         _eventBus.publish(initialGeneralState);
 
-        verbose.selectedProperty().addListener(observable ->  _eventBus.publish(getGeneralState()));
+        verbose.selectedProperty().addListener(observable -> _eventBus.publish(getGeneralState()));
     }
 
     private GeneralState getGeneralState()
