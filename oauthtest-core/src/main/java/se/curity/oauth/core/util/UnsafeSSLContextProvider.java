@@ -1,8 +1,14 @@
 package se.curity.oauth.core.util;
 
+import sun.net.www.protocol.https.DefaultHostnameVerifier;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -17,6 +23,7 @@ public final class UnsafeSSLContextProvider implements Supplier<SSLContext>
 {
 
     private static final UnsafeSSLContextProvider INSTANCE = new UnsafeSSLContextProvider();
+    private static final HostnameVerifier TRUST_ALL_HOSTS = new TrustAllHosts();
 
     private static final ThreadLocal<SSLContext> _localSslContext = new ThreadLocal<SSLContext>()
     {
@@ -27,7 +34,7 @@ public final class UnsafeSSLContextProvider implements Supplier<SSLContext>
         }
     };
 
-    public static Supplier<SSLContext> getInstance()
+    public static UnsafeSSLContextProvider getInstance()
     {
         return INSTANCE;
     }
@@ -73,4 +80,39 @@ public final class UnsafeSSLContextProvider implements Supplier<SSLContext>
             throw new IllegalStateException("Cannot create an unsafe SSL Context", t);
         }
     }
+
+    public void setUnsafeSSLContextGlobally()
+    {
+        System.out.println("Setting HttpsURLConnection SSL Context to use unsafe SSLContext globally!");
+
+        SSLContext sslContext = get();
+        HttpsURLConnection.setDefaultHostnameVerifier(TRUST_ALL_HOSTS);
+        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+    }
+
+    public void resetSSLContext()
+    {
+        System.out.println("Resetting HttpsURLConnection SSL Context to use default values");
+
+        try
+        {
+            SSLContext defaultContext = SSLContext.getDefault();
+            HttpsURLConnection.setDefaultHostnameVerifier(new DefaultHostnameVerifier());
+            HttpsURLConnection.setDefaultSSLSocketFactory(defaultContext.getSocketFactory());
+        }
+        catch (NoSuchAlgorithmException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    private static class TrustAllHosts implements HostnameVerifier
+    {
+        @Override
+        public boolean verify(String s, SSLSession sslSession)
+        {
+            return true;
+        }
+    }
+
 }

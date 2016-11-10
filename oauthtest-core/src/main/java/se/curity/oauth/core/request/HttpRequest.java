@@ -4,6 +4,7 @@ import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.internal.util.collection.ImmutableMultivaluedMap;
 import se.curity.oauth.core.state.GeneralState;
 import se.curity.oauth.core.state.SslState;
+import se.curity.oauth.core.state.SslState.SslOption;
 import se.curity.oauth.core.util.MapBuilder;
 import se.curity.oauth.core.util.UnsafeSSLContextProvider;
 import se.curity.oauth.core.util.event.Event;
@@ -26,6 +27,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static se.curity.oauth.core.state.SslState.SslOption.IGNORE_SSL;
+import static se.curity.oauth.core.state.SslState.SslOption.TRUST_OAUTH_SERVER_CERTIFICATE;
+import static se.curity.oauth.core.state.SslState.SslOption.USE_KEYSTORE;
 
 /**
  * Simplified representation of a HTTP Request that is enough to represent any OAuth request.
@@ -110,23 +115,39 @@ public abstract class HttpRequest implements Event
             return ClientBuilder.newBuilder();
         }
 
-        SSLContext sslContext;
+        SSLContext sslContext = contextFor(sslState);
 
-        if (sslState.isIgnoreSSL())
+        return ClientBuilder.newBuilder().sslContext(sslContext);
+    }
+
+    protected SSLContext contextFor(@Nullable SslState sslState)
+    {
+        SslOption option;
+
+        if (sslState == null)
         {
-            sslContext = UnsafeSSLContextProvider.getInstance().get();
+            option = IGNORE_SSL;
         }
         else
         {
-            sslContext = SslConfigurator.newInstance()
-                    .trustStoreFile(sslState.getTrustStoreFile())
-                    .trustStorePassword(sslState.getTrustStorePassword())
-                    .keyStoreFile(sslState.getKeystoreFile())
-                    .keyPassword(sslState.getKeystorePassword())
-                    .createSSLContext();
+            option = sslState.getSslOption();
         }
 
-        return ClientBuilder.newBuilder().sslContext(sslContext);
+        switch (option)
+        {
+            case USE_KEYSTORE:
+                return SslConfigurator.newInstance()
+                        .trustStoreFile(sslState.getTrustStoreFile())
+                        .trustStorePassword(sslState.getTrustStorePassword())
+                        .keyStoreFile(sslState.getKeystoreFile())
+                        .keyPassword(sslState.getKeystorePassword())
+                        .createSSLContext();
+            case TRUST_OAUTH_SERVER_CERTIFICATE:
+                // TODO check certificate first time, then trust it
+            case IGNORE_SSL:
+            default:
+                return UnsafeSSLContextProvider.getInstance().get();
+        }
     }
 
     public String toCurl(@Nullable SslState sslState, @Nullable GeneralState generalState)
@@ -137,7 +158,7 @@ public abstract class HttpRequest implements Event
                 .map(it -> "-H \"" + it.getKey() + ": " + it.getValue() + "\"")
                 .collect(Collectors.toList()));
 
-        String sslOption = (sslState != null && sslState.isIgnoreSSL()) ? "-k" : "";
+        SslOption sslOption = (sslState == null ? TRUST_OAUTH_SERVER_CERTIFICATE : sslState.getSslOption());
         String verboseOption = (generalState != null && generalState.isVerbose()) ? "-v" : "";
 
         String queryString = query.isEmpty() ? "" :
@@ -152,9 +173,9 @@ public abstract class HttpRequest implements Event
         commandParts.add("curl -X");
         commandParts.add(method);
 
-        if (!sslOption.isEmpty())
+        if (sslOption != USE_KEYSTORE)
         {
-            commandParts.add(sslOption);
+            commandParts.add("-k");
         }
 
         if (!verboseOption.isEmpty())

@@ -9,26 +9,32 @@ import se.curity.oauth.core.util.event.Event;
  */
 public class SslState implements Event
 {
-    private final boolean _ignoreSSL;
+    public enum SslOption {
+        IGNORE_SSL,
+        TRUST_OAUTH_SERVER_CERTIFICATE,
+        USE_KEYSTORE
+    }
+
+    private final SslOption _sslOption;
     private final String _trustStoreFile;
     private final String _trustStorePassword;
     private final String _keystoreFile;
     private final String _keystorePassword;
 
-    public SslState(boolean ignoreSSL, String trustStoreFile,
+    public SslState(SslOption sslOption, String trustStoreFile,
                     String trustStorePassword, String keystoreFile,
                     String keystorePassword)
     {
-        _ignoreSSL = ignoreSSL;
+        _sslOption=sslOption;
         _trustStoreFile = trustStoreFile;
         _trustStorePassword = trustStorePassword;
         _keystoreFile = keystoreFile;
         _keystorePassword = keystorePassword;
     }
 
-    public boolean isIgnoreSSL()
+    public SslOption getSslOption()
     {
-        return _ignoreSSL;
+        return _sslOption;
     }
 
     public String getTrustStoreFile()

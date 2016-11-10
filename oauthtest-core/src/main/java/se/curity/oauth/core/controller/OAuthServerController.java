@@ -48,8 +48,8 @@ public class OAuthServerController
             OAuthServerState initialOAuthServerState = _userPreferences.getOAuthServerPreferences();
 
             baseUrl.setText(initialOAuthServerState.getBaseUrl());
-            tokenEndpoint.setText(initialOAuthServerState.getAuthorizeEndpoint());
-            authorizeEndpoint.setText(initialOAuthServerState.getTokenEndpoint());
+            authorizeEndpoint.setText(initialOAuthServerState.getAuthorizeEndpoint());
+            tokenEndpoint.setText(initialOAuthServerState.getTokenEndpoint());
 
             _eventBus.publish(initialOAuthServerState);
         }
