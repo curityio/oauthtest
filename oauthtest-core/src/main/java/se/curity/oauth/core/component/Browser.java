@@ -1,8 +1,11 @@
 package se.curity.oauth.core.component;
 
+import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 import javafx.scene.web.WebEngine;
@@ -18,6 +21,12 @@ import java.net.URI;
  */
 public class Browser extends BorderPane
 {
+
+    @FXML
+    private Label urlText;
+
+    @FXML
+    private ProgressBar progressBar;
 
     @FXML
     private Text text;
@@ -62,9 +71,13 @@ public class Browser extends BorderPane
         engine.load(_initialUri.toString());
         text.setText(_message);
 
-        engine.getLoadWorker().progressProperty().addListener(observable ->
+        progressBar.progressProperty().bind(engine.getLoadWorker().progressProperty());
+
+        engine.locationProperty().addListener(observable ->
         {
-            System.out.println("Progress bar change: " + observable);
+            String url = ((ReadOnlyStringProperty) observable).getValueSafe();
+            System.out.println("Looks like we got to URL : " + url);
+            urlText.setText(url);
         });
 
         engine.getLoadWorker().stateProperty().addListener(
@@ -87,5 +100,22 @@ public class Browser extends BorderPane
         );
     }
 
+    @FXML
+    protected void close()
+    {
+        getScene().getWindow().hide();
+    }
+
+    @FXML
+    protected void previous()
+    {
+        webView.getEngine().executeScript("history.back()");
+    }
+
+    @FXML
+    protected void next()
+    {
+        webView.getEngine().executeScript("history.forward()");
+    }
 
 }
