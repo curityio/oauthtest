@@ -29,13 +29,14 @@
                 <HBox alignment="BOTTOM_RIGHT" fillHeight="false" maxHeight="-Infinity" maxWidth="-Infinity"
                       prefHeight="12.0" prefWidth="456.0" spacing="10.0">
                     <children>
-                        <Button maxHeight="28.0" minHeight="28.0" mnemonicParsing="false" prefHeight="28.0">
+                        <Button fx:id="backButton" maxHeight="28.0" minHeight="28.0" mnemonicParsing="false"
+                                prefHeight="28.0">
                             <graphic>
                                 <SVGPath content="M 0 20 L 25 0 v 10 h 25 v 20 h -25 v 10  Z" fill="#32b24a"
                                          onMouseClicked="#previous" scaleX="0.5" scaleY="0.5"/>
                             </graphic>
                         </Button>
-                        <Button maxWidth="28.0" minHeight="28.0" mnemonicParsing="false" prefHeight="28.0">
+                        <Button fx:id="nextButton" maxWidth="28.0" minHeight="28.0" mnemonicParsing="false" prefHeight="28.0">
                             <graphic>
                                 <SVGPath content="M 0 10 h 25 v -10 L 50 20 L 25 40 v -10 h -25 Z" fill="#32b24a"
                                          onMouseClicked="#next" scaleX="0.5" scaleY="0.5"/>

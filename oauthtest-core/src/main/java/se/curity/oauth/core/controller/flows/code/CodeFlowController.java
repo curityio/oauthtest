@@ -1,15 +1,10 @@
 package se.curity.oauth.core.controller.flows.code;
 
-import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
-import javafx.scene.web.WebView;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import se.curity.oauth.core.component.Arrows;
 import se.curity.oauth.core.component.Browser;
 import se.curity.oauth.core.request.CodeFlowAuthorizeRequest;
@@ -50,6 +45,7 @@ public class CodeFlowController
     private TextArea curlCommand = null;
 
     private final EventBus _eventBus;
+    private final CodeFlowAuthenticationHelper _authenticationHelper;
 
     @Nullable
     private OAuthServerState _oauthServerState = null;
@@ -58,9 +54,10 @@ public class CodeFlowController
     private SslState _sslState = null;
     private GeneralState _generalState;
 
-    public CodeFlowController(EventBus eventBus)
+    public CodeFlowController(EventBus eventBus, Browser.Factory browserFactory)
     {
         this._eventBus = eventBus;
+        _authenticationHelper = new CodeFlowAuthenticationHelper(browserFactory);
     }
 
     @FXML
@@ -181,23 +178,14 @@ public class CodeFlowController
 
         return redirectResult.onResult(uri ->
         {
-            Platform.runLater(() ->
+            if (_oauthServerState != null)
             {
-                WebView webView = new WebView();
-                webView.getEngine().load(uri.toString());
-
-                Stage dialog = new Stage();
-                dialog.setTitle("User Authentication");
-                dialog.initModality(Modality.APPLICATION_MODAL);
-                dialog.initOwner(curlCommand.getScene().getWindow());
-
-                Browser browser = new Browser("Please authenticate to proceed.", uri, _eventBus);
-
-                Scene dialogScene = new Scene(browser, 600, 600);
-                dialog.setScene(dialogScene);
-                dialog.show();
-                System.out.println("USER REDIRECTED TO " + uri);
-            });
+                _authenticationHelper.authenticate(uri, curlCommand.getScene().getWindow(), _oauthServerState);
+            }
+            else
+            {
+                throw new IllegalStateException("Running browser but OAuth Server State is unknown");
+            }
 
             //noinspection ConstantConditions (null is acceptable as a return value)
             return null;

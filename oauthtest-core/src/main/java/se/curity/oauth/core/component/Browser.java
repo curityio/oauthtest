@@ -4,17 +4,20 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import se.curity.oauth.core.util.ObservableCookieManager;
 import se.curity.oauth.core.util.event.EventBus;
 import se.curity.oauth.core.util.event.Notification;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.function.BiConsumer;
 
 /**
  * A component that shows a browser window in it.
@@ -29,6 +32,12 @@ public class Browser extends BorderPane
     private ProgressBar progressBar;
 
     @FXML
+    private Button backButton;
+
+    @FXML
+    private Button nextButton;
+
+    @FXML
     private Text text;
 
     @FXML
@@ -36,14 +45,45 @@ public class Browser extends BorderPane
 
     private final String _message;
     private final URI _initialUri;
-
     private final EventBus _eventBus;
+    private final BiConsumer<Browser, URI> _onLoadPage;
 
-    public Browser(String message, URI initialUri, EventBus eventBus)
+    /**
+     * This factory allows a Browser instance to be created by Dependency Injection more easily because it does not
+     * require the user of {@link Browser} to provide all its dependencies to create one,
+     * only the runtime dependencies which cannot be injected.
+     */
+    public static class Factory
+    {
+        private final EventBus _eventBus;
+        private final ObservableCookieManager _cookieManager;
+
+        public Factory(EventBus eventBus, ObservableCookieManager cookieManager)
+        {
+            _eventBus = eventBus;
+            _cookieManager = cookieManager;
+        }
+
+        public Browser create(String message, URI initialUri, BiConsumer<Browser, URI> onLoadPage)
+        {
+            return new Browser(message, initialUri, _eventBus, _cookieManager, onLoadPage);
+        }
+    }
+
+    private Browser(String message, URI initialUri,
+                    EventBus eventBus,
+                    ObservableCookieManager cookieManager,
+                    BiConsumer<Browser, URI> onLoadPage)
     {
         _message = message;
         _initialUri = initialUri;
         _eventBus = eventBus;
+        _onLoadPage = onLoadPage;
+
+        cookieManager.addCookieListener(cookie ->
+        {
+            System.out.println("ADDED COOKIE: " + cookie);
+        });
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass()
                 .getResource("/fxml/browser.fxml"));
@@ -75,9 +115,12 @@ public class Browser extends BorderPane
 
         engine.locationProperty().addListener(observable ->
         {
-            String url = ((ReadOnlyStringProperty) observable).getValueSafe();
-            System.out.println("Looks like we got to URL : " + url);
-            urlText.setText(url);
+            String uriString = ((ReadOnlyStringProperty) observable).getValueSafe();
+
+            _onLoadPage.accept(this, URI.create(uriString));
+
+            System.out.println("Looks like we got to URL : " + uriString);
+            urlText.setText(uriString);
         });
 
         engine.getLoadWorker().stateProperty().addListener(
@@ -94,7 +137,7 @@ public class Browser extends BorderPane
 
                         _eventBus.publish(new Notification(Notification.Level.ERROR, errorMessage));
 
-                        engine.getLoadWorker().getException().printStackTrace();
+                        error.printStackTrace();
                     }
                 }
         );
@@ -116,6 +159,21 @@ public class Browser extends BorderPane
     protected void next()
     {
         webView.getEngine().executeScript("history.forward()");
+    }
+
+    public Button getBackButton()
+    {
+        return backButton;
+    }
+
+    public Button getNextButton()
+    {
+        return nextButton;
+    }
+
+    public WebEngine getWebEngine()
+    {
+        return webView.getEngine();
     }
 
 }
