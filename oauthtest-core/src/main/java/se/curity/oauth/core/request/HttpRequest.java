@@ -59,21 +59,21 @@ public abstract class HttpRequest implements Event
         }
     };
 
-    HttpRequest(String method,
-                String baseUrl,
-                String path,
-                Map<String, Object> headers,
-                MultivaluedMap<String, String> query)
+    protected HttpRequest(String method,
+                          String baseUrl,
+                          String path,
+                          Map<String, Object> headers,
+                          MultivaluedMap<String, String> query)
     {
         this(method, baseUrl, path, headers, query, null);
     }
 
-    HttpRequest(String method,
-                String baseUrl,
-                String path,
-                Map<String, Object> headers,
-                MultivaluedMap<String, String> query,
-                @Nullable Entity<?> entity)
+    protected HttpRequest(String method,
+                          String baseUrl,
+                          String path,
+                          Map<String, Object> headers,
+                          MultivaluedMap<String, String> query,
+                          @Nullable Entity<?> entity)
     {
         this.method = method;
         this.baseUrl = baseUrl;
@@ -189,7 +189,7 @@ public abstract class HttpRequest implements Event
         return String.join(" ", commandParts);
     }
 
-    static MapBuilder<String, Object> oauthBasicHeaders()
+    protected static MapBuilder<String, Object> oauthBasicHeaders()
     {
         return new MapBuilder<String, Object>()
                 .put("Accept", "application/json");
@@ -214,7 +214,7 @@ public abstract class HttpRequest implements Event
             else
             {
                 String key = part.substring(0, equalsIndex);
-                String value = part.substring(equalsIndex);
+                String value = part.substring(equalsIndex + 1);
                 queryParameters.putSingle(key, value);
             }
         }

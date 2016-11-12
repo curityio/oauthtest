@@ -180,7 +180,22 @@ public class CodeFlowController
         {
             if (_oauthServerState != null)
             {
-                _authenticationHelper.authenticate(uri, curlCommand.getScene().getWindow(), _oauthServerState);
+                _authenticationHelper.authenticate(uri, curlCommand.getScene().getWindow(), _oauthServerState)
+                        .onSuccess((nextUri) ->
+                        {
+                            HttpRequest afterAuthnRequest = new CodeFlowAfterAuthenticationRequest(nextUri);
+                            Response afterAuthnResponse = afterAuthnRequest.send(_sslState);
+
+                            _eventBus.publish(new HttpResponseEvent(afterAuthnResponse));
+
+                            @Nullable String error = checkAuthorizeRequestResponse(request, afterAuthnResponse);
+
+                            if (error != null)
+                            {
+                                _eventBus.publish(new Notification(Notification.Level.ERROR, error));
+                            }
+                        }).onFailure((failure) -> _eventBus.publish(new Notification(Notification.Level.ERROR,
+                        "Authentication was not successful. Cannot continue the OAuth Code Flow.")));
             }
             else
             {
