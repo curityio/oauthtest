@@ -1,6 +1,7 @@
 package se.curity.oauth.core.controller.flows.code;
 
 import javafx.application.Platform;
+import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
@@ -20,11 +21,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class CodeFlowAuthenticationHelper
 {
 
-    private final Browser.Factory _browserFactory;
+    private final Browser _browser;
+    private String _authenticationDoneUrl;
 
-    CodeFlowAuthenticationHelper(Browser.Factory browserFactory)
+    CodeFlowAuthenticationHelper(Browser browser)
     {
-        _browserFactory = browserFactory;
+        _browser = browser;
+        _authenticationDoneUrl = getClass().getResource("/html/browser/authentication-done.html").toExternalForm();
     }
 
     Promise<URI, Void> authenticate(URI uri, Window ownerWindow, OAuthServerState oauthServerState)
@@ -43,9 +46,13 @@ class CodeFlowAuthenticationHelper
 
             AtomicBoolean success = new AtomicBoolean(false);
 
-            Browser browser = _browserFactory.create("Please authenticate to proceed.",
+            String oauthServerAddress = asSimpleAddress(
+                    oauthServerState.getBaseUrl(),
+                    oauthServerState.getAuthorizeEndpoint());
+
+            _browser.initializeWith("Please authenticate to proceed.",
                     uri,
-                    (browse, loadedUri) -> reactIfAuthenticationDone(browse, loadedUri, oauthServerState, () ->
+                    (browse, loadedUri) -> reactIfAuthenticationDone(browse, loadedUri, oauthServerAddress, () ->
                     {
                         success.set(true);
                         deferredAuthentication.fullfill(loadedUri);
@@ -60,10 +67,17 @@ class CodeFlowAuthenticationHelper
                 }
             });
 
-            Scene dialogScene = new Scene(browser, 600, 600);
+            if (_browser.getScene() != null)
+            {
+                // force the Browser to become scene-less
+                _browser.getScene().setRoot(new Group());
+            }
+
+            Scene dialogScene = new Scene(_browser, 600, 600);
             dialog.setScene(dialogScene);
             dialog.show();
-            System.out.println("USER REDIRECTED TO " + uri);
+
+            System.out.println("CodeFlowAuthenticationHelper: User being redirected to: " + uri);
         });
 
         return deferredAuthentication.getPromise();
@@ -71,28 +85,24 @@ class CodeFlowAuthenticationHelper
 
     private void reactIfAuthenticationDone(Browser browser,
                                            URI uri,
-                                           OAuthServerState oauthServerState,
+                                           String oauthServerAddress,
                                            Runnable onAuthenticationDone)
     {
         WebEngine engine = browser.getWebEngine();
-        Platform.runLater(() ->
+        String uriAddress = asSimpleAddress(uri);
+
+        if (uriAddress.equals(oauthServerAddress))
         {
-            String oauthServerBaseUrl = oauthServerState.getBaseUrl();
-            String authorizeEndpoint = oauthServerState.getAuthorizeEndpoint();
+            // authentication done!
+            engine.load(_authenticationDoneUrl);
 
-            String uriAddress = asSimpleAddress(uri);
-            String oauthServerAddress = asSimpleAddress(oauthServerBaseUrl, authorizeEndpoint);
-
-            if (uriAddress.equals(oauthServerAddress))
+            Platform.runLater(() ->
             {
                 browser.getBackButton().setDisable(true);
                 browser.getNextButton().setDisable(true);
-
-                engine.load(getClass().getResource("/html/browser/authentication-done.html").toExternalForm());
-
                 onAuthenticationDone.run();
-            }
-        });
+            });
+        }
     }
 
     private static String asSimpleAddress(String baseUrl, String path)

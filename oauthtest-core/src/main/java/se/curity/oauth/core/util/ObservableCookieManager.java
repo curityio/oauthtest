@@ -4,6 +4,7 @@ import javafx.application.Platform;
 
 import java.io.IOException;
 import java.net.CookieManager;
+import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.ArrayList;
@@ -47,6 +48,11 @@ public enum ObservableCookieManager
                 );
             }
         });
+    }
+
+    public CookieStore getCookieStore()
+    {
+        return ((CookieManager) CookieManager.getDefault()).getCookieStore();
     }
 
 

@@ -4,6 +4,9 @@ import javafx.beans.InvalidationListener;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextArea;
 import se.curity.oauth.core.component.Arrows;
 import se.curity.oauth.core.component.Browser;
@@ -16,6 +19,7 @@ import se.curity.oauth.core.state.OAuthServerState;
 import se.curity.oauth.core.state.SslState;
 import se.curity.oauth.core.util.Either;
 import se.curity.oauth.core.util.ListUtils;
+import se.curity.oauth.core.util.ObservableCookieManager;
 import se.curity.oauth.core.util.event.EventBus;
 import se.curity.oauth.core.util.event.Notification;
 
@@ -23,10 +27,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import java.net.CookieStore;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import static se.curity.oauth.core.request.HttpRequest.parseQueryParameters;
@@ -54,10 +60,10 @@ public class CodeFlowController
     private SslState _sslState = null;
     private GeneralState _generalState;
 
-    public CodeFlowController(EventBus eventBus, Browser.Factory browserFactory)
+    public CodeFlowController(EventBus eventBus, Browser browser)
     {
         this._eventBus = eventBus;
-        _authenticationHelper = new CodeFlowAuthenticationHelper(browserFactory);
+        _authenticationHelper = new CodeFlowAuthenticationHelper(browser);
     }
 
     @FXML
@@ -339,14 +345,56 @@ public class CodeFlowController
         return null;
     }
 
+    private static void confirmRemovalOfCookies()
+    {
+        CookieStore cookieStore = ObservableCookieManager.INSTANCE.getCookieStore();
+
+        if (!cookieStore.getCookies().isEmpty())
+        {
+
+            ButtonType yesButton = new ButtonType("Yes", ButtonBar.ButtonData.OK_DONE);
+            ButtonType noButton = new ButtonType("No", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            String content = "When your session already contains cookies, it is possible that you have " +
+                    "authenticated before because authenticators may remember you by setting cookies.\n" +
+                    "If you go back to the authenticator page with valid authentication cookies, the authenticator " +
+                    "will just send you back to your application without bothering you again with credentials " +
+                    "checking. In normal circumstances, that's great, but if you want to test the authenticator, " +
+                    "that's not what you want.\n\n" +
+                    "To forget your cookies from a previous session and force authentication to happen again, " +
+                    "choose 'Yes', otherwise, choose 'No'.";
+
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, content, yesButton, noButton);
+
+            alert.setTitle("You've got cookies!");
+            alert.setHeaderText("Your current session seems to contain cookies. Do you want to remove them?");
+            alert.getDialogPane().getChildren().add(new TextArea("Cookies: " + cookieStore.getCookies()));
+
+            Optional<ButtonType> result = alert.showAndWait();
+
+            if (result.isPresent() && result.get() == yesButton)
+            {
+                System.out.println("Removing all cookies");
+                cookieStore.removeAll();
+            }
+        }
+    }
+
     private class RequestService extends Service<Response>
     {
 
         @Override
         protected Task<Response> createTask()
         {
+
             final HttpRequest request = createRequest();
             final @Nullable SslState sslState = _sslState;
+
+            // on the first step, we should clean up the cookies from possible previous sessions
+            if (request instanceof CodeFlowAuthorizeRequest)
+            {
+                confirmRemovalOfCookies();
+            }
 
             return new Task<Response>()
             {
