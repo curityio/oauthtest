@@ -25,8 +25,10 @@ class ApplicationContainer
         container.addComponent(new EventBus());
         container.addComponent(new UserPreferences());
         container.addComponent(ObservableCookieManager.INSTANCE);
-        container.addComponent(Browser.Factory.class);
         container.addComponent(primaryStage);
+
+        // make it a singleton because the browser is a global resource, creating it more than once would cause problems
+        container.as(Characteristics.CACHE).addComponent(Browser.class);
         container.as(Characteristics.CACHE)
                 .addComponent(MessagePopup.class)
                 // force immediate instantiation

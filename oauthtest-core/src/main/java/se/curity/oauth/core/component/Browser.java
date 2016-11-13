@@ -1,6 +1,8 @@
 package se.curity.oauth.core.component;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,8 +17,11 @@ import se.curity.oauth.core.util.ObservableCookieManager;
 import se.curity.oauth.core.util.event.EventBus;
 import se.curity.oauth.core.util.event.Notification;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.net.URI;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 /**
@@ -43,46 +48,25 @@ public class Browser extends BorderPane
     @FXML
     private WebView webView;
 
-    private final String _message;
-    private final URI _initialUri;
     private final EventBus _eventBus;
-    private final BiConsumer<Browser, URI> _onLoadPage;
+    private final ObservableCookieManager _cookieManager;
 
-    /**
-     * This factory allows a Browser instance to be created by Dependency Injection more easily because it does not
-     * require the user of {@link Browser} to provide all its dependencies to create one,
-     * only the runtime dependencies which cannot be injected.
-     */
-    public static class Factory
+    @Nullable
+    private InvalidationListener _tempLocationListener = null;
+
+    @Nullable
+    private ChangeListener<Worker.State> _tempStateChangeListener = null;
+
+    public Browser(EventBus eventBus,
+                   ObservableCookieManager cookieManager)
     {
-        private final EventBus _eventBus;
-        private final ObservableCookieManager _cookieManager;
-
-        public Factory(EventBus eventBus, ObservableCookieManager cookieManager)
-        {
-            _eventBus = eventBus;
-            _cookieManager = cookieManager;
-        }
-
-        public Browser create(String message, URI initialUri, BiConsumer<Browser, URI> onLoadPage)
-        {
-            return new Browser(message, initialUri, _eventBus, _cookieManager, onLoadPage);
-        }
-    }
-
-    private Browser(String message, URI initialUri,
-                    EventBus eventBus,
-                    ObservableCookieManager cookieManager,
-                    BiConsumer<Browser, URI> onLoadPage)
-    {
-        _message = message;
-        _initialUri = initialUri;
         _eventBus = eventBus;
-        _onLoadPage = onLoadPage;
+        _cookieManager = cookieManager;
 
         cookieManager.addCookieListener(cookie ->
         {
-            System.out.println("ADDED COOKIE: " + cookie);
+            // TODO later we should make the cookies visible in the UI
+            System.out.printf("ADDED COOKIE (%s): %s%n", cookie.getPath(), cookie);
         });
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass()
@@ -104,49 +88,71 @@ public class Browser extends BorderPane
     @FXML
     private void initialize()
     {
+        WebEngine engine = webView.getEngine();
+        progressBar.progressProperty().bind(engine.getLoadWorker().progressProperty());
+    }
+
+    public void initializeWith(String message, URI initialUri, BiConsumer<Browser, URI> onLoadPage)
+    {
         System.out.println("Initializing webview");
 
         WebEngine engine = webView.getEngine();
 
-        engine.load(_initialUri.toString());
-        text.setText(_message);
+        cleanupListeners();
 
-        progressBar.progressProperty().bind(engine.getLoadWorker().progressProperty());
-
-        engine.locationProperty().addListener(observable ->
+        _tempLocationListener = observable ->
         {
             String uriString = ((ReadOnlyStringProperty) observable).getValueSafe();
+            System.out.println("Browser loading URL: " + uriString);
 
-            _onLoadPage.accept(this, URI.create(uriString));
+            onLoadPage.accept(this, URI.create(uriString));
 
-            System.out.println("Looks like we got to URL : " + uriString);
             urlText.setText(uriString);
-        });
+        };
 
-        engine.getLoadWorker().stateProperty().addListener(
-                (observableValue, oldState, newState) ->
-                {
-                    System.out.println("WebEngine: Old state: " + oldState + ", newState: " + newState);
-                    System.out.println("Observable: " + observableValue);
+        _tempStateChangeListener = (observableValue, oldState, newState) ->
+        {
+            System.out.printf("WebEngine: Old state: %s, newState: %s%n", oldState, newState);
 
-                    if (newState == Worker.State.FAILED)
-                    {
-                        Throwable error = engine.getLoadWorker().getException();
+            if (newState == Worker.State.FAILED)
+            {
+                Throwable error = engine.getLoadWorker().getException();
 
-                        String errorMessage = "Failed to load page in the browser: " + error.getMessage();
+                String errorMessage = "Failed to load page in the browser: " + error.getMessage();
 
-                        _eventBus.publish(new Notification(Notification.Level.ERROR, errorMessage));
+                _eventBus.publish(new Notification(Notification.Level.ERROR, errorMessage));
 
-                        error.printStackTrace();
-                    }
-                }
-        );
+                error.printStackTrace();
+            }
+        };
+
+        engine.getLoadWorker().stateProperty().addListener(_tempStateChangeListener);
+        engine.locationProperty().addListener(_tempLocationListener);
+
+        engine.load(initialUri.toString());
+        text.setText(message);
+    }
+
+    private void cleanupListeners()
+    {
+        WebEngine engine = webView.getEngine();
+
+        if (_tempLocationListener != null)
+        {
+            engine.locationProperty().removeListener(_tempLocationListener);
+        }
+
+        if (_tempStateChangeListener != null)
+        {
+            engine.getLoadWorker().stateProperty().removeListener(_tempStateChangeListener);
+        }
     }
 
     @FXML
     protected void close()
     {
         getScene().getWindow().hide();
+        cleanupListeners();
     }
 
     @FXML
@@ -174,6 +180,16 @@ public class Browser extends BorderPane
     public WebEngine getWebEngine()
     {
         return webView.getEngine();
+    }
+
+    public List<HttpCookie> getCookies()
+    {
+        return _cookieManager.getCookieStore().getCookies();
+    }
+
+    public void removeAllCookies()
+    {
+        _cookieManager.getCookieStore().removeAll();
     }
 
 }
