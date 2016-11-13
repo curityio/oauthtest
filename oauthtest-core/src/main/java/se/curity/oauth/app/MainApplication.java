@@ -1,4 +1,4 @@
-package se.curity.oauth.core;
+package se.curity.oauth.app;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -8,16 +8,21 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.util.BuilderFactory;
+import se.curity.oauth.core.ApplicationContainer;
 
 /**
  * The OAuth-Test JavaFX Application.
  */
 public class MainApplication extends Application
 {
-
     public static void main(String[] args)
     {
         launch(args);
+    }
+
+    static
+    {
+        OperatingSystemUtil.initialize();
     }
 
     public void start(Stage primaryStage) throws Exception
