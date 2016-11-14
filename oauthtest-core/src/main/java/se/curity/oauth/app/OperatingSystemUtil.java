@@ -8,26 +8,21 @@ final class OperatingSystemUtil
 
     public static void initialize() throws RuntimeException
     {
-        OperatingSystemInitializer operatingSystemInitializer;
+        OperatingSystemInitializer operatingSystemInitializer = (i) -> {};
         java.awt.Image image = new ImageIcon(MainApplication.class.getResource("/images/favicon-normal.png")).getImage();
         String osName = System.getProperty("os.name");
 
-        switch (osName)
+        if (osName.contains("OS X"))
         {
-            case "Mac OS X":
-                try
-                {
-                    operatingSystemInitializer = (MacOsInitializer) Class.forName(
-                            "se.curity.oauth.app.MacOsInitializer").getConstructor().newInstance();
-                }
-                catch (ReflectiveOperationException e)
-                {
-                    throw new RuntimeException(e);
-                }
-
-                break;
-            default:
-                operatingSystemInitializer = (i) -> {};
+            try
+            {
+                operatingSystemInitializer = (MacOsInitializer) Class.forName(
+                        "se.curity.oauth.app.MacOsInitializer").getConstructor().newInstance();
+            }
+            catch (ReflectiveOperationException e)
+            {
+                throw new RuntimeException(e);
+            }
         }
 
         operatingSystemInitializer.initialize(image);
