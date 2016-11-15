@@ -1,6 +1,6 @@
 package se.curity.oauth.core.util;
 
-import se.curity.oauth.app.MainApplication;
+import se.curity.oauth.core.MainApplication;
 import se.curity.oauth.core.state.GeneralState;
 import se.curity.oauth.core.state.OAuthServerState;
 import se.curity.oauth.core.state.SslState;

@@ -1,7 +1,6 @@
-package se.curity.oauth.app;
+package se.curity.oauth.core;
 
-@SuppressWarnings("WeakerAccess")
-public class MacOsInitializer implements OperatingSystemInitializer
+class MacOsInitializer implements OperatingSystemInitializer
 {
     @Override
     public void initialize(java.awt.Image image)

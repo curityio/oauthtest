@@ -1,4 +1,4 @@
-package se.curity.oauth.app;
+package se.curity.oauth.core;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -8,7 +8,6 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.util.BuilderFactory;
-import se.curity.oauth.core.ApplicationContainer;
 
 /**
  * The OAuth-Test JavaFX Application.

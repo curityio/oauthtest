@@ -1,4 +1,4 @@
-package se.curity.oauth.app;
+package se.curity.oauth.core;
 
 import javax.swing.ImageIcon;
 
@@ -17,7 +17,7 @@ final class OperatingSystemUtil
             try
             {
                 operatingSystemInitializer = (MacOsInitializer) Class.forName(
-                        "se.curity.oauth.app.MacOsInitializer").getConstructor().newInstance();
+                        "se.curity.oauth.core.MacOsInitializer").getDeclaredConstructors()[0].newInstance();
             }
             catch (ReflectiveOperationException e)
             {

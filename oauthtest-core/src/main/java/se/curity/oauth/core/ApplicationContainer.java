@@ -12,11 +12,11 @@ import se.curity.oauth.core.util.event.EventBus;
 /**
  * Dependency Injection Container.
  */
-public class ApplicationContainer
+class ApplicationContainer
 {
     private final MutablePicoContainer container = new DefaultPicoContainer();
 
-    public ApplicationContainer(Stage primaryStage)
+    ApplicationContainer(Stage primaryStage)
     {
         container.addComponent(new Workers());
         container.addComponent(new EventBus());
@@ -28,7 +28,7 @@ public class ApplicationContainer
                 .getComponent(MessagePopup.class);
     }
 
-    public Object get(Class<?> type)
+    Object get(Class<?> type)
     {
         Object instance = container.getComponent(type);
         if (instance == null)
