@@ -186,7 +186,9 @@ public class CodeFlowController
         {
             if (_oauthServerState != null)
             {
-                _authenticationHelper.authenticate(uri, curlCommand.getScene().getWindow(), _oauthServerState)
+                String redirectUri = request.getState().getRedirectUri();
+
+                _authenticationHelper.authenticate(uri, curlCommand.getScene().getWindow(), redirectUri)
                         .onSuccess((nextUri) ->
                         {
                             HttpRequest afterAuthnRequest = new CodeFlowAfterAuthenticationRequest(nextUri);

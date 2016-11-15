@@ -9,7 +9,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import se.curity.oauth.core.component.Browser;
-import se.curity.oauth.core.state.OAuthServerState;
 import se.curity.oauth.core.util.Promise;
 
 import java.net.URI;
@@ -30,7 +29,7 @@ class CodeFlowAuthenticationHelper
         _authenticationDoneUrl = getClass().getResource("/html/browser/authentication-done.html").toExternalForm();
     }
 
-    Promise<URI, Void> authenticate(URI uri, Window ownerWindow, OAuthServerState oauthServerState)
+    Promise<URI, Void> authenticate(URI uri, Window ownerWindow, String redirectUri)
     {
         Promise.Deferred<URI, Void> deferredAuthentication = new Promise.Deferred<>();
 
@@ -46,13 +45,9 @@ class CodeFlowAuthenticationHelper
 
             AtomicBoolean success = new AtomicBoolean(false);
 
-            String oauthServerAddress = asSimpleAddress(
-                    oauthServerState.getBaseUrl(),
-                    oauthServerState.getAuthorizeEndpoint());
-
             _browser.initializeWith("Please authenticate to proceed.",
                     uri,
-                    (browse, loadedUri) -> reactIfAuthenticationDone(browse, loadedUri, oauthServerAddress, () ->
+                    (browse, loadedUri) -> reactIfAuthenticationDone(browse, loadedUri, redirectUri, () ->
                     {
                         success.set(true);
                         deferredAuthentication.fullfill(loadedUri);
@@ -85,13 +80,13 @@ class CodeFlowAuthenticationHelper
 
     private void reactIfAuthenticationDone(Browser browser,
                                            URI uri,
-                                           String oauthServerAddress,
+                                           String redirectUri,
                                            Runnable onAuthenticationDone)
     {
         WebEngine engine = browser.getWebEngine();
         String uriAddress = asSimpleAddress(uri);
 
-        if (uriAddress.equals(oauthServerAddress))
+        if (uriAddress.equals(redirectUri))
         {
             // authentication done!
             engine.load(_authenticationDoneUrl);
@@ -103,21 +98,6 @@ class CodeFlowAuthenticationHelper
                 onAuthenticationDone.run();
             });
         }
-    }
-
-    private static String asSimpleAddress(String baseUrl, String path)
-    {
-        while (baseUrl.endsWith("/"))
-        {
-            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-        }
-
-        if (!path.startsWith("/"))
-        {
-            path = "/" + path;
-        }
-
-        return baseUrl + path;
     }
 
     private static String asSimpleAddress(URI uri)
