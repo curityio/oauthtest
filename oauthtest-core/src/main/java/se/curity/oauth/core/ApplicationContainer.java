@@ -14,7 +14,6 @@ import se.curity.oauth.core.util.event.EventBus;
  */
 class ApplicationContainer
 {
-
     private final MutablePicoContainer container = new DefaultPicoContainer();
 
     ApplicationContainer(Stage primaryStage)
@@ -41,5 +40,4 @@ class ApplicationContainer
             return instance;
         }
     }
-
 }

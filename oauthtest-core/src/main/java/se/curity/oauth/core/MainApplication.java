@@ -14,10 +14,14 @@ import javafx.util.BuilderFactory;
  */
 public class MainApplication extends Application
 {
-
     public static void main(String[] args)
     {
         launch(args);
+    }
+
+    static
+    {
+        OperatingSystemUtil.initialize();
     }
 
     public void start(Stage primaryStage) throws Exception
