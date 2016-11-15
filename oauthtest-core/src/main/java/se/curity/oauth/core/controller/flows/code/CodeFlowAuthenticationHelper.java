@@ -88,11 +88,11 @@ class CodeFlowAuthenticationHelper
 
         if (uriAddress.equals(redirectUri))
         {
-            // authentication done!
-            engine.load(_authenticationDoneUrl);
-
             Platform.runLater(() ->
             {
+                // authentication done!
+                engine.load(_authenticationDoneUrl);
+
                 browser.getBackButton().setDisable(true);
                 browser.getNextButton().setDisable(true);
                 onAuthenticationDone.run();
