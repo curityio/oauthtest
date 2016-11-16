@@ -217,12 +217,14 @@ public class CodeFlowController
 
     private Either<URI, String> validateRedirect(Response response)
     {
-        if (response.getStatus() != 302)
+        int status = response.getStatus();
+
+        if (status < 300 || status >= 400)
         {
             return Either.failure(String.format(
-                    "The OAuth server was expected to return a 302 status code for the code flow authorize request," +
-                            " but it returned %d instead. Check the server response to see what went wrong.",
-                    response.getStatus()));
+                    "The OAuth server was expected to return a status code in the range of 300 to 399 for the code " +
+                            "flow authorize request, but it returned %d instead. Check the server response to see what " +
+                            "went wrong.", status));
         }
 
         List<Object> locationHeaders = response.getHeaders().get("Location");
@@ -251,12 +253,14 @@ public class CodeFlowController
     @Nullable
     private String checkAuthorizeRequestResponse(CodeFlowAuthorizeRequest request, Response response)
     {
-        if (response.getStatus() != 302)
+        int status = response.getStatus();
+
+        if (status < 300 || status >= 400)
         {
             return String.format(
-                    "The OAuth server was expected to return a 302 status code for the code flow authorize request," +
-                            " but it returned %d instead. Check the server response to see what went wrong.",
-                    response.getStatus());
+                    "The OAuth server was expected to return a status code in the range of 300 to 399 for the code " +
+                            "flow authorize request, but it returned %d instead. Check the server response to see " +
+                            "what went wrong.", status);
         }
 
         List<Object> locationHeaders = response.getHeaders().get("Location");
