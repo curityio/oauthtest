@@ -58,7 +58,7 @@ public class CodeFlowController
 
     @Nullable
     private SslState _sslState = null;
-    private GeneralState _generalState;
+    private boolean _verboseRequest;
 
     public CodeFlowController(EventBus eventBus, Browser browser)
     {
@@ -83,8 +83,11 @@ public class CodeFlowController
 
         _eventBus.subscribe(GeneralState.class, (@Nonnull GeneralState generalState) ->
         {
-            _generalState = generalState;
-            updateCurlText();
+            if (_verboseRequest != generalState.isVerbose())
+            {
+                _verboseRequest = generalState.isVerbose();
+                updateCurlText();
+            }
         });
 
         authzRequestViewController.setInvalidationListener(observable -> updateCurlText());
@@ -103,7 +106,7 @@ public class CodeFlowController
         @Nullable HttpRequest request = createRequestIfPossible();
         if (request != null)
         {
-            curlCommand.setText(request.toCurl(_sslState, _generalState));
+            curlCommand.setText(request.toCurl(_sslState, _verboseRequest));
         }
         else
         {
