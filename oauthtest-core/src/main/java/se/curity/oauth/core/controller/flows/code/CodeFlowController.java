@@ -186,7 +186,9 @@ public class CodeFlowController
         {
             if (_oauthServerState != null)
             {
-                _authenticationHelper.authenticate(uri, curlCommand.getScene().getWindow(), _oauthServerState)
+                String redirectUri = request.getState().getRedirectUri();
+
+                _authenticationHelper.authenticate(uri, curlCommand.getScene().getWindow(), redirectUri)
                         .onSuccess((nextUri) ->
                         {
                             HttpRequest afterAuthnRequest = new CodeFlowAfterAuthenticationRequest(nextUri);
@@ -215,12 +217,14 @@ public class CodeFlowController
 
     private Either<URI, String> validateRedirect(Response response)
     {
-        if (response.getStatus() != 302)
+        int status = response.getStatus();
+
+        if (status < 300 || status >= 400)
         {
             return Either.failure(String.format(
-                    "The OAuth server was expected to return a 302 status code for the code flow authorize request," +
-                            " but it returned %d instead. Check the server response to see what went wrong.",
-                    response.getStatus()));
+                    "The OAuth server was expected to return a status code in the range of 300 to 399 for the code " +
+                            "flow authorize request, but it returned %d instead. Check the server response to see what " +
+                            "went wrong.", status));
         }
 
         List<Object> locationHeaders = response.getHeaders().get("Location");
@@ -249,12 +253,14 @@ public class CodeFlowController
     @Nullable
     private String checkAuthorizeRequestResponse(CodeFlowAuthorizeRequest request, Response response)
     {
-        if (response.getStatus() != 302)
+        int status = response.getStatus();
+
+        if (status < 300 || status >= 400)
         {
             return String.format(
-                    "The OAuth server was expected to return a 302 status code for the code flow authorize request," +
-                            " but it returned %d instead. Check the server response to see what went wrong.",
-                    response.getStatus());
+                    "The OAuth server was expected to return a status code in the range of 300 to 399 for the code " +
+                            "flow authorize request, but it returned %d instead. Check the server response to see " +
+                            "what went wrong.", status);
         }
 
         List<Object> locationHeaders = response.getHeaders().get("Location");
@@ -352,17 +358,17 @@ public class CodeFlowController
         if (!cookieStore.getCookies().isEmpty())
         {
 
-            ButtonType yesButton = new ButtonType("Yes", ButtonBar.ButtonData.OK_DONE);
-            ButtonType noButton = new ButtonType("No", ButtonBar.ButtonData.CANCEL_CLOSE);
+            ButtonType yesButton = new ButtonType("Delete Cookies", ButtonBar.ButtonData.OK_DONE);
+            ButtonType noButton = new ButtonType("Proceed", ButtonBar.ButtonData.CANCEL_CLOSE);
 
             String content = "When your session already contains cookies, it is possible that you have " +
-                    "authenticated before because authenticators may remember you by setting cookies.\n" +
-                    "If you go back to the authenticator page with valid authentication cookies, the authenticator " +
-                    "will just send you back to your application without bothering you again with credentials " +
-                    "checking. In normal circumstances, that's great, but if you want to test the authenticator, " +
+                    "authenticated before because your authentication service may remember you by setting a cookie.\n" +
+                    "If you go back to that service with a valid authentication cookie, the authentication service " +
+                    "will just redirect you back to the OAuth server without bothering you again with credential " +
+                    "checking. In normal circumstances, this is great. If, however, you want to re-test authentication, " +
                     "that's not what you want.\n\n" +
                     "To forget your cookies from a previous session and force authentication to happen again, " +
-                    "choose 'Yes', otherwise, choose 'No'.";
+                    "choose 'Delete Cookies', otherwise, choose 'Proceed'.";
 
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, content, yesButton, noButton);
 
