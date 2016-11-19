@@ -1,5 +1,6 @@
 package se.curity.oauth.core.component;
 
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.value.ChangeListener;
@@ -105,9 +106,11 @@ public class Browser extends BorderPane
             String uriString = ((ReadOnlyStringProperty) observable).getValueSafe();
             System.out.println("Browser loading URL: " + uriString);
 
-            onLoadPage.accept(this, URI.create(uriString));
-
-            urlText.setText(uriString);
+            Platform.runLater(() ->
+            {
+                onLoadPage.accept(this, URI.create(uriString));
+                urlText.setText(uriString);
+            });
         };
 
         _tempStateChangeListener = (observableValue, oldState, newState) ->
