@@ -96,6 +96,11 @@
                                                         </TextArea>
                                                     </content>
                                                 </Tab>
+                                                <Tab closable="false" text="Notifications">
+                                                    <content>
+                                                        <fx:include source="notification-table.fxml"/>
+                                                    </content>
+                                                </Tab>
                                             </tabs>
                                         </TabPane>
                                     </items>
