@@ -7,6 +7,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import se.curity.oauth.core.util.event.EventBus;
 import se.curity.oauth.core.util.event.Notification;
 
@@ -17,6 +18,9 @@ import se.curity.oauth.core.util.event.Notification;
  */
 public class NotificationTable
 {
+
+    @FXML
+    private TextField filterText;
     @FXML
     private TableView<Notification> notificationTable;
     @FXML
@@ -44,7 +48,19 @@ public class NotificationTable
 
         notificationTable.setItems(filteredNotifications);
 
+        filterText.textProperty().addListener((observable, oldValue, newValue) ->
+                filteredNotifications.setPredicate(notification -> newValue == null ||
+                        newValue.isEmpty() ||
+                        includeNotification(notification, newValue)));
+
         _eventBus.subscribe(Notification.class, _notifications::add);
+    }
+
+    private static boolean includeNotification(Notification notification, String filter)
+    {
+        String lowerCaseFilter = filter.toLowerCase();
+        return notification.getLevel().name().toLowerCase().contains(lowerCaseFilter) ||
+                notification.getText().toLowerCase().contains(lowerCaseFilter);
     }
 
 }

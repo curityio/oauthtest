@@ -15,7 +15,7 @@
               spacing="5.0">
             <children>
                 <Label text="Filter:"/>
-                <TextField
+                <TextField fx:id="filterText"
                     promptText="Enter search term"/>
             </children>
         </HBox>
