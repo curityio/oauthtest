@@ -71,7 +71,7 @@ public class CodeFlowController
     {
         _eventBus.subscribe(OAuthServerState.class, (@Nonnull OAuthServerState serverState) ->
         {
-            CodeFlowController.this._oauthServerState = serverState;
+            _oauthServerState = serverState;
             updateCurlText();
         });
 
