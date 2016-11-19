@@ -186,24 +186,9 @@ public class CodeFlowController
         {
             if (_oauthServerState != null)
             {
-                String redirectUri = request.getState().getRedirectUri();
-
-                _authenticationHelper.authenticate(uri, curlCommand.getScene().getWindow(), redirectUri)
-                        .onSuccess((nextUri) ->
-                        {
-                            HttpRequest afterAuthnRequest = new CodeFlowAfterAuthenticationRequest(nextUri);
-                            Response afterAuthnResponse = afterAuthnRequest.send(_sslState);
-
-                            _eventBus.publish(new HttpResponseEvent(afterAuthnResponse));
-
-                            @Nullable String error = checkAuthorizeRequestResponse(request, afterAuthnResponse);
-
-                            if (error != null)
-                            {
-                                _eventBus.publish(new Notification(Notification.Level.ERROR, error));
-                            }
-                        }).onFailure((failure) -> _eventBus.publish(new Notification(Notification.Level.ERROR,
-                        "Authentication was not successful. Cannot continue the OAuth Code Flow.")));
+                _authenticationHelper.authenticate(uri, curlCommand.getScene().getWindow())
+                        .onSuccess(nextUri -> onAuthenticationSuccessful(request, nextUri))
+                        .onFailure(this::onAuthenticationFailure);
             }
             else
             {
@@ -213,6 +198,28 @@ public class CodeFlowController
             //noinspection ConstantConditions (null is acceptable as a return value)
             return null;
         }, Function.identity());
+    }
+
+    private void onAuthenticationSuccessful(CodeFlowAuthorizeRequest request, URI nextUri)
+    {
+        List<String> codes = parseQueryParameters(nextUri.getQuery()).get("code");
+        if (codes.isEmpty())
+        {
+            // this should not happen, otherwise authentication would not have been known to be successful.
+            throw new IllegalStateException("No code provided in the redirect_uri");
+        }
+
+        // TODO this is just temporarily telling us what's happened... should prepare for token request here.
+        _eventBus.publish(new Notification(Notification.Level.INFO, "Got the code: " + codes.get(0)));
+        _eventBus.publish(new Notification(Notification.Level.INFO, "The redirect_uri is: " + nextUri.getHost()));
+    }
+
+    private void onAuthenticationFailure(Void nothing)
+    {
+        // TODO onFailure, make the Arrows component move one step back
+
+        _eventBus.publish(new Notification(Notification.Level.ERROR,
+                "Authentication was not successful. Cannot continue the OAuth Code Flow."));
     }
 
     private Either<URI, String> validateRedirect(Response response)

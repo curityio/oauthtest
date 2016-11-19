@@ -3,14 +3,15 @@ package se.curity.oauth.core.controller.flows.code;
 import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import se.curity.oauth.core.component.Browser;
+import se.curity.oauth.core.request.HttpRequest;
 import se.curity.oauth.core.util.Promise;
 
+import javax.ws.rs.core.MultivaluedMap;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -29,7 +30,7 @@ class CodeFlowAuthenticationHelper
         _authenticationDoneUrl = getClass().getResource("/html/browser/authentication-done.html").toExternalForm();
     }
 
-    Promise<URI, Void> authenticate(URI uri, Window ownerWindow, String redirectUri)
+    Promise<URI, Void> authenticate(URI uri, Window ownerWindow)
     {
         Promise.Deferred<URI, Void> deferredAuthentication = new Promise.Deferred<>();
 
@@ -47,7 +48,7 @@ class CodeFlowAuthenticationHelper
 
             _browser.initializeWith("Please authenticate to proceed.",
                     uri,
-                    (browse, loadedUri) -> reactIfAuthenticationDone(browse, loadedUri, redirectUri, () ->
+                    (browse, loadedUri) -> reactIfAuthenticationDone(browse, loadedUri, () ->
                     {
                         success.set(true);
                         deferredAuthentication.fullfill(loadedUri);
@@ -80,32 +81,20 @@ class CodeFlowAuthenticationHelper
 
     private void reactIfAuthenticationDone(Browser browser,
                                            URI uri,
-                                           String redirectUri,
                                            Runnable onAuthenticationDone)
     {
-        WebEngine engine = browser.getWebEngine();
-        String uriAddress = asSimpleAddress(uri);
+        MultivaluedMap<String, String> queryParameters = HttpRequest.parseQueryParameters(uri.getQuery());
 
-        if (uriAddress.equals(redirectUri))
+        // we know we should run a token request when the Authorization server gives us the code
+        if (queryParameters.containsKey("code"))
         {
             // authentication done!
-            engine.load(_authenticationDoneUrl);
+            _browser.getWebEngine().load(_authenticationDoneUrl);
 
             browser.getBackButton().setDisable(true);
             browser.getNextButton().setDisable(true);
             onAuthenticationDone.run();
         }
     }
-
-    private static String asSimpleAddress(URI uri)
-    {
-        String scheme = (uri.getScheme() == null ? "http://" : uri.getScheme() + "://");
-        String hostName = (uri.getHost() == null ? "" : uri.getHost());
-        String port = (uri.getPort() > 0 ? ":" + Integer.toString(uri.getPort()) : "");
-        String path = (uri.getPath() == null ? "" : uri.getPath());
-
-        return scheme + hostName + port + path;
-    }
-
 
 }

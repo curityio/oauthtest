@@ -83,6 +83,14 @@ public abstract class HttpRequest implements Event
         _entity = entity;
     }
 
+    /**
+     * Send a request and wait for its response.
+     * <p>
+     * Because this method blocks until a response is received, it must not be called from the JavaFX Thread.
+     *
+     * @param sslState current SSL State
+     * @return HTTP response
+     */
     public Response send(@Nullable SslState sslState)
     {
         Client client = createClientWith(sslState).build();
