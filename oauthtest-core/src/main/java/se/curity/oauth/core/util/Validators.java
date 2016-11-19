@@ -17,6 +17,15 @@ public class Validators
     private static final Pattern URL_PATTERN = Pattern.compile(
             "\\(?\\b([A-z]+://|[A-z0-9]+[.])[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
 
+    // accept only numbers between 0 and 999_999_999
+    private static final Pattern NATURAL_NUMBER_PATTERN = Pattern.compile(
+            "0*\\d{1,9}");
+
+    public static boolean isValidInteger(String value)
+    {
+        return NATURAL_NUMBER_PATTERN.matcher(value).matches();
+    }
+
     public static boolean isValidUrl(String url)
     {
         return URL_PATTERN.matcher(url).matches();

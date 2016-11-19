@@ -8,8 +8,11 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import se.curity.oauth.core.state.GeneralState;
 import se.curity.oauth.core.util.event.EventBus;
 import se.curity.oauth.core.util.event.Notification;
+
+import java.util.LinkedList;
 
 /**
  * A table that displays {@link Notification}s.
@@ -29,7 +32,9 @@ public class NotificationTable
     private TableColumn<Notification, String> notificationMessageColumn;
 
     private final EventBus _eventBus;
-    private final ObservableList<Notification> _notifications = FXCollections.observableArrayList();
+    private final ObservableList<Notification> _notifications = FXCollections.observableList(new LinkedList<>());
+
+    private int _maxNotificationRows = 50;
 
     public NotificationTable(EventBus eventBus)
     {
@@ -53,7 +58,30 @@ public class NotificationTable
                         newValue.isEmpty() ||
                         includeNotification(notification, newValue)));
 
-        _eventBus.subscribe(Notification.class, _notifications::add);
+        _eventBus.subscribe(Notification.class, this::add);
+
+        _eventBus.subscribe(GeneralState.class, state ->
+        {
+            if (_maxNotificationRows != state.getMaximumNotificationRows())
+            {
+                _maxNotificationRows = state.getMaximumNotificationRows();
+                limitNotificationListSize();
+            }
+        });
+    }
+
+    private void limitNotificationListSize()
+    {
+        if (_notifications.size() > _maxNotificationRows)
+        {
+            _notifications.remove(_maxNotificationRows, _notifications.size());
+        }
+    }
+
+    private void add(Notification notification)
+    {
+        _notifications.add(0, notification);
+        limitNotificationListSize();
     }
 
     private static boolean includeNotification(Notification notification, String filter)
