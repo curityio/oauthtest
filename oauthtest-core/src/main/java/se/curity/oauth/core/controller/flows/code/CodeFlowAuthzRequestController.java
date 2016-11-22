@@ -30,6 +30,8 @@ public class CodeFlowAuthzRequestController implements CodeFlowController.CodeFl
     private TextField stateField;
     @FXML
     private ImageView scopeImageView;
+    @FXML
+    public ImageView redirectUriImageView;
 
     private final Workers _workers;
     private final HelpTooltip _helpTooltip;
@@ -53,16 +55,24 @@ public class CodeFlowAuthzRequestController implements CodeFlowController.CodeFl
         }).onSuccess(properties ->
         {
             String scopeText = properties.getProperty("scope");
-            Platform.runLater(() -> _helpTooltip.setHtml(scopeText));
-        });
+            String redirectUriText = properties.getProperty("redirect_uri");
 
-        scopeImageView.setOnMouseEntered(event ->
-        {
-            _helpTooltip.showUnder(scopeField);
-        });
-        scopeImageView.setOnMouseExited(event ->
-        {
-            _helpTooltip.hide();
+            Platform.runLater(() ->
+            {
+                scopeImageView.setOnMouseEntered(event ->
+                {
+                    _helpTooltip.setHtml(scopeText);
+                    _helpTooltip.showUnder(scopeField);
+                });
+                scopeImageView.setOnMouseExited(event -> _helpTooltip.hide());
+
+                redirectUriImageView.setOnMouseEntered(event ->
+                {
+                    _helpTooltip.setHtml(redirectUriText);
+                    _helpTooltip.showUnder(redirectUriField);
+                });
+                redirectUriImageView.setOnMouseExited(event -> _helpTooltip.hide());
+            });
         });
     }
 

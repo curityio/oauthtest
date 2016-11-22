@@ -49,7 +49,8 @@
                 <Insets left="3.0"/>
             </GridPane.margin>
         </ImageView>
-        <ImageView fitHeight="16.0" fitWidth="16.0" nodeOrientation="INHERIT" pickOnBounds="true"
+        <ImageView fx:id="redirectUriImageView" fitHeight="16.0" fitWidth="16.0" nodeOrientation="INHERIT"
+                   pickOnBounds="true"
                    preserveRatio="true" GridPane.columnIndex="2" GridPane.rowIndex="2">
             <image>
                 <Image url="/images/help.png"/>
