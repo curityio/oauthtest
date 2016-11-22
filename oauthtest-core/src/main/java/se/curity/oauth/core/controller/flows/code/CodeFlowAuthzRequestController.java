@@ -32,17 +32,18 @@ public class CodeFlowAuthzRequestController implements CodeFlowController.CodeFl
     private ImageView scopeImageView;
 
     private final Workers _workers;
+    private final HelpTooltip _helpTooltip;
 
-    public CodeFlowAuthzRequestController(Workers workers)
+    public CodeFlowAuthzRequestController(Workers workers,
+                                          HelpTooltip helpTooltip)
     {
         _workers = workers;
+        _helpTooltip = helpTooltip;
     }
 
     @FXML
     private void initialize()
     {
-        HelpTooltip scopeHelpTooltip = new HelpTooltip();
-
         _workers.runInBackground(() ->
         {
             Properties codeFlowViewProperties = new Properties();
@@ -52,16 +53,16 @@ public class CodeFlowAuthzRequestController implements CodeFlowController.CodeFl
         }).onSuccess(properties ->
         {
             String scopeText = properties.getProperty("scope");
-            Platform.runLater(() -> scopeHelpTooltip.setHtml(scopeText));
+            Platform.runLater(() -> _helpTooltip.setHtml(scopeText));
         });
 
         scopeImageView.setOnMouseEntered(event ->
         {
-            scopeHelpTooltip.showUnder(scopeField);
+            _helpTooltip.showUnder(scopeField);
         });
         scopeImageView.setOnMouseExited(event ->
         {
-            scopeHelpTooltip.hide();
+            _helpTooltip.hide();
         });
     }
 
