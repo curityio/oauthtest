@@ -5,6 +5,7 @@ import org.picocontainer.Characteristics;
 import org.picocontainer.DefaultPicoContainer;
 import org.picocontainer.MutablePicoContainer;
 import se.curity.oauth.core.component.Browser;
+import se.curity.oauth.core.component.HelpTooltip;
 import se.curity.oauth.core.component.MessagePopup;
 import se.curity.oauth.core.util.ObservableCookieManager;
 import se.curity.oauth.core.util.UserPreferences;
@@ -23,6 +24,7 @@ class ApplicationContainer
         container.addComponent(new Workers());
         container.addComponent(new EventBus());
         container.addComponent(new UserPreferences());
+        container.addComponent(HelpTooltip.class);
         container.addComponent(ObservableCookieManager.INSTANCE);
         container.addComponent(primaryStage);
 
