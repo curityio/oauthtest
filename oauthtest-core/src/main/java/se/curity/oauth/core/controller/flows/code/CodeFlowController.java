@@ -4,8 +4,12 @@ import javafx.beans.InvalidationListener;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextArea;
 import se.curity.oauth.core.component.Arrows;
+import se.curity.oauth.core.component.Browser;
 import se.curity.oauth.core.request.CodeFlowAuthorizeRequest;
 import se.curity.oauth.core.request.HttpRequest;
 import se.curity.oauth.core.request.HttpResponseEvent;
@@ -13,7 +17,9 @@ import se.curity.oauth.core.state.CodeFlowAuthzState;
 import se.curity.oauth.core.state.GeneralState;
 import se.curity.oauth.core.state.OAuthServerState;
 import se.curity.oauth.core.state.SslState;
+import se.curity.oauth.core.util.Either;
 import se.curity.oauth.core.util.ListUtils;
+import se.curity.oauth.core.util.ObservableCookieManager;
 import se.curity.oauth.core.util.event.EventBus;
 import se.curity.oauth.core.util.event.Notification;
 
@@ -21,10 +27,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import java.net.CookieStore;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 import static se.curity.oauth.core.request.HttpRequest.parseQueryParameters;
 
@@ -41,39 +50,44 @@ public class CodeFlowController
     @FXML
     private TextArea curlCommand = null;
 
-    private final EventBus eventBus;
+    private final EventBus _eventBus;
+    private final CodeFlowAuthenticationHelper _authenticationHelper;
 
     @Nullable
-    private OAuthServerState serverState = null;
+    private OAuthServerState _oauthServerState = null;
 
     @Nullable
     private SslState _sslState = null;
-    private GeneralState _generalState;
+    private boolean _verboseRequest;
 
-    public CodeFlowController(EventBus eventBus)
+    public CodeFlowController(EventBus eventBus, Browser browser)
     {
-        this.eventBus = eventBus;
+        this._eventBus = eventBus;
+        _authenticationHelper = new CodeFlowAuthenticationHelper(browser);
     }
 
     @FXML
     protected void initialize()
     {
-        eventBus.subscribe(OAuthServerState.class, (@Nonnull OAuthServerState serverState) ->
+        _eventBus.subscribe(OAuthServerState.class, (@Nonnull OAuthServerState serverState) ->
         {
-            this.serverState = serverState;
+            _oauthServerState = serverState;
             updateCurlText();
         });
 
-        eventBus.subscribe(SslState.class, (@Nonnull SslState sslState) ->
+        _eventBus.subscribe(SslState.class, (@Nonnull SslState sslState) ->
         {
             _sslState = sslState;
             updateCurlText();
         });
 
-        eventBus.subscribe(GeneralState.class, (@Nonnull GeneralState generalState) ->
+        _eventBus.subscribe(GeneralState.class, (@Nonnull GeneralState generalState) ->
         {
-            _generalState = generalState;
-            updateCurlText();
+            if (_verboseRequest != generalState.isVerbose())
+            {
+                _verboseRequest = generalState.isVerbose();
+                updateCurlText();
+            }
         });
 
         authzRequestViewController.setInvalidationListener(observable -> updateCurlText());
@@ -92,7 +106,7 @@ public class CodeFlowController
         @Nullable HttpRequest request = createRequestIfPossible();
         if (request != null)
         {
-            curlCommand.setText(request.toCurl(_sslState, _generalState));
+            curlCommand.setText(request.toCurl(_sslState, _verboseRequest));
         }
         else
         {
@@ -104,9 +118,9 @@ public class CodeFlowController
     private HttpRequest createRequestIfPossible()
     {
         CodeFlowAuthzState codeFlowAuthzState = authzRequestViewController.getCodeFlowAuthzState();
-        if (codeFlowAuthzState.isValid() && serverState != null && serverState.isValid())
+        if (codeFlowAuthzState.isValid() && _oauthServerState != null && _oauthServerState.isValid())
         {
-            return new CodeFlowAuthorizeRequest(serverState, codeFlowAuthzState);
+            return new CodeFlowAuthorizeRequest(_oauthServerState, codeFlowAuthzState);
         }
         else
         {
@@ -119,18 +133,18 @@ public class CodeFlowController
         CodeFlowAuthzState authzState = authzRequestViewController.getCodeFlowAuthzState();
         if (authzState.isValid())
         {
-            if (serverState != null && serverState.isValid())
+            if (_oauthServerState != null && _oauthServerState.isValid())
             {
-                return new CodeFlowAuthorizeRequest(serverState, authzState);
+                return new CodeFlowAuthorizeRequest(_oauthServerState, authzState);
             }
             else
             {
-                String error = (serverState == null) ?
+                String error = (_oauthServerState == null) ?
                         "OAuth server settings are not available" :
                         "OAuth server settings have errors:" +
-                                ListUtils.joinStringsWith("\n* ", serverState.getValidationErrors());
+                                ListUtils.joinStringsWith("\n* ", _oauthServerState.getValidationErrors());
 
-                eventBus.publish(new Notification(Notification.Level.ERROR, error));
+                _eventBus.publish(new Notification(Notification.Level.ERROR, error));
                 throw new IllegalStateException(error);
             }
         }
@@ -139,7 +153,7 @@ public class CodeFlowController
             List<String> validationErrors = authzState.getValidationErrors();
             String error = "Code Flow Authorization request has errors:" +
                     ListUtils.joinStringsWith("\n* ", validationErrors);
-            eventBus.publish(new Notification(Notification.Level.ERROR, error));
+            _eventBus.publish(new Notification(Notification.Level.ERROR, error));
             throw new IllegalStateException(error);
         }
     }
@@ -155,11 +169,11 @@ public class CodeFlowController
     private String onResponse(HttpRequest request, Response response)
     {
         // always publish the response anyway
-        eventBus.publish(new HttpResponseEvent(response));
+        _eventBus.publish(new HttpResponseEvent(response));
 
         if (request instanceof CodeFlowAuthorizeRequest)
         {
-            return checkAuthorizeRequestResponse((CodeFlowAuthorizeRequest) request, response);
+            return redirectUserToAuthenticate((CodeFlowAuthorizeRequest) request, response);
         }
         // TODO if (request instanceof CodeFlowTokenRequest)
 
@@ -167,14 +181,96 @@ public class CodeFlowController
     }
 
     @Nullable
+    private String redirectUserToAuthenticate(CodeFlowAuthorizeRequest request, Response response)
+    {
+        Either<URI, String> redirectResult = validateRedirect(response);
+
+        return redirectResult.onResult(uri ->
+        {
+            if (_oauthServerState != null)
+            {
+                _authenticationHelper.authenticate(uri, curlCommand.getScene().getWindow())
+                        .onSuccess(nextUri -> onAuthenticationSuccessful(request, nextUri))
+                        .onFailure(this::onAuthenticationFailure);
+            }
+            else
+            {
+                throw new IllegalStateException("Running browser but OAuth Server State is unknown");
+            }
+
+            //noinspection ConstantConditions (null is acceptable as a return value)
+            return null;
+        }, Function.identity());
+    }
+
+    private void onAuthenticationSuccessful(CodeFlowAuthorizeRequest request, URI nextUri)
+    {
+        List<String> codes = parseQueryParameters(nextUri.getQuery()).get("code");
+        if (codes.isEmpty())
+        {
+            // this should not happen, otherwise authentication would not have been known to be successful.
+            throw new IllegalStateException("No code provided in the redirect_uri");
+        }
+
+        // TODO this is just temporarily telling us what's happened... should prepare for token request here.
+        _eventBus.publish(new Notification(Notification.Level.INFO, "Got the code: " + codes.get(0)));
+        _eventBus.publish(new Notification(Notification.Level.INFO, "The redirect_uri is: " + nextUri.getHost()));
+    }
+
+    private void onAuthenticationFailure(Void nothing)
+    {
+        // TODO onFailure, make the Arrows component move one step back
+
+        _eventBus.publish(new Notification(Notification.Level.ERROR,
+                "Authentication was not successful. Cannot continue the OAuth Code Flow."));
+    }
+
+    private Either<URI, String> validateRedirect(Response response)
+    {
+        int status = response.getStatus();
+
+        if (status < 300 || status >= 400)
+        {
+            return Either.failure(String.format(
+                    "The OAuth server was expected to return a status code in the range of 300 to 399 for the code " +
+                            "flow authorize request, but it returned %d instead. Check the server response to see what " +
+                            "went wrong.", status));
+        }
+
+        List<Object> locationHeaders = response.getHeaders().get("Location");
+
+        if (locationHeaders == null || locationHeaders.size() != 1)
+        {
+            String errorSuffix = (locationHeaders == null) ?
+                    "failed to send the Location header, which is mandatory." :
+                    "sent more than one Location header, so it is not possible to know which one to follow!";
+
+            return Either.failure("The OAuth server returned an invalid HTTP response! Although it sent a '302' status code, it " +
+                    errorSuffix);
+        }
+
+        try
+        {
+            return Either.success(new URI(locationHeaders.get(0).toString()));
+        }
+        catch (URISyntaxException e)
+        {
+            return Either.failure(
+                    "The OAuth server tried to redirect the client to an invalid URI:\n" + e.getMessage());
+        }
+    }
+
+    @Nullable
     private String checkAuthorizeRequestResponse(CodeFlowAuthorizeRequest request, Response response)
     {
-        if (response.getStatus() != 302)
+        int status = response.getStatus();
+
+        if (status < 300 || status >= 400)
         {
             return String.format(
-                    "The OAuth server was expected to return a 302 status code for the code flow authorize request," +
-                            " but it returned %d instead. Check the server response to see what went wrong.",
-                    response.getStatus());
+                    "The OAuth server was expected to return a status code in the range of 300 to 399 for the code " +
+                            "flow authorize request, but it returned %d instead. Check the server response to see " +
+                            "what went wrong.", status);
         }
 
         List<Object> locationHeaders = response.getHeaders().get("Location");
@@ -260,9 +356,44 @@ public class CodeFlowController
         System.out.println("Redirect URI: " + redirectUri);
 
         // TODO set the Location for the browser to follow
-        //Platform.runLater(() -> eventBus.publish());
+        //Platform.runLater(() -> _eventBus.publish());
 
         return null;
+    }
+
+    private static void confirmRemovalOfCookies()
+    {
+        CookieStore cookieStore = ObservableCookieManager.INSTANCE.getCookieStore();
+
+        if (!cookieStore.getCookies().isEmpty())
+        {
+
+            ButtonType yesButton = new ButtonType("Delete Cookies", ButtonBar.ButtonData.OK_DONE);
+            ButtonType noButton = new ButtonType("Proceed", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            String content = "When your session already contains cookies, it is possible that you have " +
+                    "authenticated before because your authentication service may remember you by setting a cookie.\n" +
+                    "If you go back to that service with a valid authentication cookie, the authentication service " +
+                    "will just redirect you back to the OAuth server without bothering you again with credential " +
+                    "checking. In normal circumstances, this is great. If, however, you want to re-test authentication, " +
+                    "that's not what you want.\n\n" +
+                    "To forget your cookies from a previous session and force authentication to happen again, " +
+                    "choose 'Delete Cookies', otherwise, choose 'Proceed'.";
+
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, content, yesButton, noButton);
+
+            alert.setTitle("You've got cookies!");
+            alert.setHeaderText("Your current session seems to contain cookies. Do you want to remove them?");
+            alert.getDialogPane().getChildren().add(new TextArea("Cookies: " + cookieStore.getCookies()));
+
+            Optional<ButtonType> result = alert.showAndWait();
+
+            if (result.isPresent() && result.get() == yesButton)
+            {
+                System.out.println("Removing all cookies");
+                cookieStore.removeAll();
+            }
+        }
     }
 
     private class RequestService extends Service<Response>
@@ -271,8 +402,15 @@ public class CodeFlowController
         @Override
         protected Task<Response> createTask()
         {
+
             final HttpRequest request = createRequest();
             final @Nullable SslState sslState = _sslState;
+
+            // on the first step, we should clean up the cookies from possible previous sessions
+            if (request instanceof CodeFlowAuthorizeRequest)
+            {
+                confirmRemovalOfCookies();
+            }
 
             return new Task<Response>()
             {

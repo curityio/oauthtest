@@ -4,6 +4,7 @@ import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.internal.util.collection.ImmutableMultivaluedMap;
 import se.curity.oauth.core.state.GeneralState;
 import se.curity.oauth.core.state.SslState;
+import se.curity.oauth.core.state.SslState.SslOption;
 import se.curity.oauth.core.util.MapBuilder;
 import se.curity.oauth.core.util.UnsafeSSLContextProvider;
 import se.curity.oauth.core.util.event.Event;
@@ -26,6 +27,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static se.curity.oauth.core.state.SslState.SslOption.IGNORE_SSL;
+import static se.curity.oauth.core.state.SslState.SslOption.TRUST_OAUTH_SERVER_CERTIFICATE;
+import static se.curity.oauth.core.state.SslState.SslOption.USE_KEYSTORE;
 
 /**
  * Simplified representation of a HTTP Request that is enough to represent any OAuth request.
@@ -54,21 +59,21 @@ public abstract class HttpRequest implements Event
         }
     };
 
-    HttpRequest(String method,
-                String baseUrl,
-                String path,
-                Map<String, Object> headers,
-                MultivaluedMap<String, String> query)
+    protected HttpRequest(String method,
+                          String baseUrl,
+                          String path,
+                          Map<String, Object> headers,
+                          MultivaluedMap<String, String> query)
     {
         this(method, baseUrl, path, headers, query, null);
     }
 
-    HttpRequest(String method,
-                String baseUrl,
-                String path,
-                Map<String, Object> headers,
-                MultivaluedMap<String, String> query,
-                @Nullable Entity<?> entity)
+    protected HttpRequest(String method,
+                          String baseUrl,
+                          String path,
+                          Map<String, Object> headers,
+                          MultivaluedMap<String, String> query,
+                          @Nullable Entity<?> entity)
     {
         this.method = method;
         this.baseUrl = baseUrl;
@@ -78,6 +83,14 @@ public abstract class HttpRequest implements Event
         _entity = entity;
     }
 
+    /**
+     * Send a request and wait for its response.
+     * <p>
+     * Because this method blocks until a response is received, it must not be called from the JavaFX Thread.
+     *
+     * @param sslState current SSL State
+     * @return HTTP response
+     */
     public Response send(@Nullable SslState sslState)
     {
         Client client = createClientWith(sslState).build();
@@ -110,26 +123,42 @@ public abstract class HttpRequest implements Event
             return ClientBuilder.newBuilder();
         }
 
-        SSLContext sslContext;
-
-        if (sslState.isIgnoreSSL())
-        {
-            sslContext = UnsafeSSLContextProvider.getInstance().get();
-        }
-        else
-        {
-            sslContext = SslConfigurator.newInstance()
-                    .trustStoreFile(sslState.getTrustStoreFile())
-                    .trustStorePassword(sslState.getTrustStorePassword())
-                    .keyStoreFile(sslState.getKeystoreFile())
-                    .keyPassword(sslState.getKeystorePassword())
-                    .createSSLContext();
-        }
+        SSLContext sslContext = contextFor(sslState);
 
         return ClientBuilder.newBuilder().sslContext(sslContext);
     }
 
-    public String toCurl(@Nullable SslState sslState, @Nullable GeneralState generalState)
+    protected SSLContext contextFor(@Nullable SslState sslState)
+    {
+        SslOption option;
+
+        if (sslState == null)
+        {
+            option = IGNORE_SSL;
+        }
+        else
+        {
+            option = sslState.getSslOption();
+        }
+
+        switch (option)
+        {
+            case USE_KEYSTORE:
+                return SslConfigurator.newInstance()
+                        .trustStoreFile(sslState.getTrustStoreFile())
+                        .trustStorePassword(sslState.getTrustStorePassword())
+                        .keyStoreFile(sslState.getKeystoreFile())
+                        .keyPassword(sslState.getKeystorePassword())
+                        .createSSLContext();
+            case TRUST_OAUTH_SERVER_CERTIFICATE:
+                // TODO check certificate first time, then trust it
+            case IGNORE_SSL:
+            default:
+                return UnsafeSSLContextProvider.getInstance().get();
+        }
+    }
+
+    public String toCurl(@Nullable SslState sslState, boolean verbose)
     {
         List<String> commandParts = new ArrayList<>();
 
@@ -137,8 +166,8 @@ public abstract class HttpRequest implements Event
                 .map(it -> "-H \"" + it.getKey() + ": " + it.getValue() + "\"")
                 .collect(Collectors.toList()));
 
-        String sslOption = (sslState != null && sslState.isIgnoreSSL()) ? "-k" : "";
-        String verboseOption = (generalState != null && generalState.isVerbose()) ? "-v" : "";
+        SslOption sslOption = (sslState == null ? TRUST_OAUTH_SERVER_CERTIFICATE : sslState.getSslOption());
+        String verboseOption = verbose ? "-v" : "";
 
         String queryString = query.isEmpty() ? "" :
                 "?" + String.join("&", query.entrySet().stream()
@@ -152,9 +181,9 @@ public abstract class HttpRequest implements Event
         commandParts.add("curl -X");
         commandParts.add(method);
 
-        if (!sslOption.isEmpty())
+        if (sslOption != USE_KEYSTORE)
         {
-            commandParts.add(sslOption);
+            commandParts.add("-k");
         }
 
         if (!verboseOption.isEmpty())
@@ -168,7 +197,7 @@ public abstract class HttpRequest implements Event
         return String.join(" ", commandParts);
     }
 
-    static MapBuilder<String, Object> oauthBasicHeaders()
+    protected static MapBuilder<String, Object> oauthBasicHeaders()
     {
         return new MapBuilder<String, Object>()
                 .put("Accept", "application/json");
@@ -193,7 +222,7 @@ public abstract class HttpRequest implements Event
             else
             {
                 String key = part.substring(0, equalsIndex);
-                String value = part.substring(equalsIndex);
+                String value = part.substring(equalsIndex + 1);
                 queryParameters.putSingle(key, value);
             }
         }

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
@@ -82,9 +83,18 @@
         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
     </padding>
     <top>
-        <VBox alignment="CENTER_LEFT" BorderPane.alignment="TOP_LEFT">
+        <VBox alignment="CENTER_LEFT" spacing="5.0" BorderPane.alignment="TOP_LEFT">
             <children>
-                <CheckBox fx:id="ignoreSSL" mnemonicParsing="false" text="Ignore SSL (unsafe)"/>
+                <RadioButton mnemonicParsing="false" text="Trust OAuth server SSL certificate"
+                             userData="TRUST_OAUTH_SERVER_CERTIFICATE">
+                    <toggleGroup>
+                        <ToggleGroup fx:id="sslOption"/>
+                    </toggleGroup>
+                </RadioButton>
+                <RadioButton mnemonicParsing="false" text="Ignore SSL certificates"
+                             toggleGroup="$sslOption" userData="IGNORE_SSL"/>
+                <RadioButton mnemonicParsing="false" text="Use SSL certificate keystore"
+                             toggleGroup="$sslOption" userData="USE_KEYSTORE"/>
             </children>
             <padding>
                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>

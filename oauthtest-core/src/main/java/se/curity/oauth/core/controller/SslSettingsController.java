@@ -2,9 +2,9 @@ package se.curity.oauth.core.controller;
 
 import javafx.beans.InvalidationListener;
 import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import javafx.scene.control.ToggleGroup;
 import se.curity.oauth.core.state.SslState;
 import se.curity.oauth.core.util.UserPreferences;
 import se.curity.oauth.core.util.event.EventBus;
@@ -12,7 +12,7 @@ import se.curity.oauth.core.util.event.EventBus;
 public class SslSettingsController
 {
     @FXML
-    private CheckBox ignoreSSL;
+    private ToggleGroup sslOption;
 
     @FXML
     private TextField trustStoreFile;
@@ -52,26 +52,41 @@ public class SslSettingsController
 
         _eventBus.publish(initialSslState);
 
-        ignoreSSL.selectedProperty().addListener(observable ->
+        sslOption.selectedToggleProperty().addListener(observable ->
         {
-            trustStoreFile.setDisable(ignoreSSL.isSelected());
-            trustStorePassword.setDisable(ignoreSSL.isSelected());
-            keystoreFile.setDisable(ignoreSSL.isSelected());
-            keystorePassword.setDisable(ignoreSSL.isSelected());
+            SslState.SslOption selection = SslState.SslOption.valueOf(
+                    sslOption.getSelectedToggle().getUserData().toString());
+
+            boolean disableKeystoreOptions = (selection != SslState.SslOption.USE_KEYSTORE);
+
+            trustStoreFile.setDisable(disableKeystoreOptions);
+            trustStorePassword.setDisable(disableKeystoreOptions);
+            keystoreFile.setDisable(disableKeystoreOptions);
+            keystorePassword.setDisable(disableKeystoreOptions);
         });
 
         // set this property after the listener is added above so the fields are disabled if necessary
-        ignoreSSL.setSelected(initialSslState.isIgnoreSSL());
+        sslOption.getToggles().stream()
+                .filter(t -> t.getUserData().equals(initialSslState.getSslOption().name()))
+                .findAny()
+                .ifPresent(sslOption::selectToggle);
 
         InvalidationListener invalidationListener = observable ->
                 _eventBus.publish(getSslState());
 
-        ignoreSSL.selectedProperty().addListener(invalidationListener);
+        sslOption.selectedToggleProperty().addListener(invalidationListener);
+        trustStoreFile.textProperty().addListener(invalidationListener);
+        trustStorePassword.textProperty().addListener(invalidationListener);
+        keystoreFile.textProperty().addListener(invalidationListener);
+        keystorePassword.textProperty().addListener(invalidationListener);
     }
 
     private SslState getSslState()
     {
-        return new SslState(ignoreSSL.isSelected(), trustStoreFile.getText(),
+        SslState.SslOption selectedSslOption = SslState.SslOption.valueOf(
+                sslOption.getSelectedToggle().getUserData().toString());
+
+        return new SslState(selectedSslOption, trustStoreFile.getText(),
                 trustStorePassword.getText(), keystoreFile.getText(), keystorePassword.getText());
     }
 
