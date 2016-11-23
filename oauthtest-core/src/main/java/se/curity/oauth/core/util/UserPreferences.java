@@ -12,14 +12,15 @@ import static se.curity.oauth.core.state.SslState.SslOption.TRUST_OAUTH_SERVER_C
 public final class UserPreferences
 {
     private final Preferences _preferences = Preferences.userNodeForPackage(MainApplication.class);
-
     private static final String BASE_URL_PREFERENCE_KEY = "BASE_URL";
+
     private static final String AUTHZ_ENDPOINT_PREFERENCE_KEY = "AUTHZ_ENDPOINT";
     private static final String TOKEN_ENDPOINT_PREFERENCE_KEY = "TOKEN_ENDPOINT";
-
     private static final String BASE_URL = "https://localhost:8443";
+
     private static final String TOKEN_ENDPOINT = "/oauth/token";
     private static final String VERBOSE = "VERBOSE";
+    private static final String MAX_NOTIFICATION_ROWS = "MAX_NOTIFICATION_ROWS";
     private static final String AUTHZ_ENDPOINT = "/oauth/authorize";
     private static final String SSL_OPTION = "SSL_OPTION";
     private static final String TRUSTSTORE_FILE = "TRUSTORE_FILE";
@@ -59,14 +60,18 @@ public final class UserPreferences
 
     public GeneralState getGeneralPreferences()
     {
-        boolean verbose = _preferences.getBoolean(VERBOSE, true);
+        boolean verbose = _preferences.getBoolean(VERBOSE, GeneralState.DEFAULT_VERBOSE);
+        int maximumNotificationRows = _preferences.getInt(
+                MAX_NOTIFICATION_ROWS,
+                GeneralState.DEFAULT_MAX_NOTIFICATION_ROWS);
 
-        return new GeneralState(verbose);
+        return new GeneralState(verbose, maximumNotificationRows);
     }
 
     public void putGeneralSettings(GeneralState generalState)
     {
         _preferences.putBoolean(VERBOSE, generalState.isVerbose());
+        _preferences.putInt(MAX_NOTIFICATION_ROWS, generalState.getMaximumNotificationRows());
     }
 
     public void putSslState(SslState sslState)

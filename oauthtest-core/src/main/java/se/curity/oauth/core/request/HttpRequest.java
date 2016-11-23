@@ -158,7 +158,7 @@ public abstract class HttpRequest implements Event
         }
     }
 
-    public String toCurl(@Nullable SslState sslState, @Nullable GeneralState generalState)
+    public String toCurl(@Nullable SslState sslState, boolean verbose)
     {
         List<String> commandParts = new ArrayList<>();
 
@@ -167,7 +167,7 @@ public abstract class HttpRequest implements Event
                 .collect(Collectors.toList()));
 
         SslOption sslOption = (sslState == null ? TRUST_OAUTH_SERVER_CERTIFICATE : sslState.getSslOption());
-        String verboseOption = (generalState != null && generalState.isVerbose()) ? "-v" : "";
+        String verboseOption = verbose ? "-v" : "";
 
         String queryString = query.isEmpty() ? "" :
                 "?" + String.join("&", query.entrySet().stream()

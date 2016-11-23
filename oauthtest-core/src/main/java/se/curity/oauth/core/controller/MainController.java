@@ -21,17 +21,17 @@ public class MainController
     @FXML
     private CodeFlowController codeFlowController;
 
-    private final EventBus eventBus;
+    private final EventBus _eventBus;
 
     public MainController(EventBus eventBus)
     {
-        this.eventBus = eventBus;
+        _eventBus = eventBus;
     }
 
     @FXML
     protected void initialize()
     {
-        eventBus.subscribe(HttpResponseEvent.class, responseEvent ->
+        _eventBus.subscribe(HttpResponseEvent.class, responseEvent ->
         {
             Response response = responseEvent.getResponse();
 
@@ -46,7 +46,7 @@ public class MainController
         });
 
         // listen to SSL State so we can turn off SSL checks globally if necessary
-        eventBus.subscribe(SslState.class, sslState ->
+        _eventBus.subscribe(SslState.class, sslState ->
         {
             switch (sslState.getSslOption())
             {

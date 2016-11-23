@@ -27,7 +27,7 @@ public final class Promise<Success, Failure>
             }
         }
 
-        public void fail(Failure failure)
+        public void fail(@Nullable Failure failure)
         {
             _failure = failure;
 
