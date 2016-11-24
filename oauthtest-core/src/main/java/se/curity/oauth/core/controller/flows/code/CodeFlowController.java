@@ -189,7 +189,7 @@ public class CodeFlowController
         {
             if (_oauthServerState != null)
             {
-                _authenticationHelper.authenticate(uri, curlCommand.getScene().getWindow())
+                _authenticationHelper.authenticate(request, uri, curlCommand.getScene().getWindow())
                         .onSuccess(nextUri -> onAuthenticationSuccessful(request, nextUri))
                         .onFailure(this::onAuthenticationFailure);
             }
