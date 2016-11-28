@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * A component that shows a browser window in it.
@@ -93,7 +93,7 @@ public class Browser extends BorderPane
         progressBar.progressProperty().bind(engine.getLoadWorker().progressProperty());
     }
 
-    public void initializeWith(String message, URI initialUri, BiConsumer<Browser, URI> onLoadPage)
+    public void initializeWith(String message, URI initialUri, Consumer<URI> onLoadPage)
     {
         System.out.println("Initializing webview");
 
@@ -108,7 +108,7 @@ public class Browser extends BorderPane
 
             Platform.runLater(() ->
             {
-                onLoadPage.accept(this, URI.create(uriString));
+                onLoadPage.accept(URI.create(uriString));
                 urlText.setText(uriString);
             });
         };
