@@ -1,11 +1,12 @@
 package se.curity.oauth.core.state;
 
 import se.curity.oauth.core.util.Validatable;
+import se.curity.oauth.core.util.event.Event;
 
 import java.util.Collections;
 import java.util.List;
 
-public class CodeFlowAuthzState extends Validatable
+public class CodeFlowAuthzState extends Validatable implements Event
 {
 
     private final String responseType;
