@@ -1,9 +1,11 @@
 package se.curity.oauth.core.controller;
 
 import javafx.beans.InvalidationListener;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import se.curity.oauth.core.state.OAuthServerState;
 import se.curity.oauth.core.util.UserPreferences;
 import se.curity.oauth.core.util.Validators;
@@ -33,8 +35,17 @@ public class OAuthServerController
         _eventBus = eventBus;
         _userPreferences = userPreferences;
 
+        EventHandler<WindowEvent> onCloseRequest = primaryStage.getOnCloseRequest();
+
         primaryStage.setOnCloseRequest(e ->
-                _userPreferences.putOAuthServerPreferences(getOAuthServerState()));
+        {
+            _userPreferences.putOAuthServerPreferences(getOAuthServerState());
+
+            if (onCloseRequest != null)
+            {
+                onCloseRequest.handle(e);
+            }
+        });
     }
 
     @FXML
