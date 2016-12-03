@@ -1,10 +1,12 @@
 package se.curity.oauth.core.controller;
 
 import javafx.beans.InvalidationListener;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import se.curity.oauth.core.state.GeneralState;
 import se.curity.oauth.core.util.UserPreferences;
 import se.curity.oauth.core.util.Validators;
@@ -20,15 +22,10 @@ public class GeneralSettingsController
     private final EventBus _eventBus;
     private final UserPreferences _userPreferences;
 
-    public GeneralSettingsController(EventBus eventBus, Stage primaryStage, UserPreferences userPreferences)
+    public GeneralSettingsController(EventBus eventBus, UserPreferences userPreferences)
     {
         _eventBus = eventBus;
         _userPreferences = userPreferences;
-
-        primaryStage.setOnCloseRequest(e ->
-        {
-            _userPreferences.putGeneralSettings(getGeneralState());
-        });
     }
 
     @FXML

@@ -1,10 +1,12 @@
 package se.curity.oauth.core.controller;
 
 import javafx.beans.InvalidationListener;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.scene.control.ToggleGroup;
+import javafx.stage.WindowEvent;
 import se.curity.oauth.core.state.SslState;
 import se.curity.oauth.core.util.UserPreferences;
 import se.curity.oauth.core.util.event.EventBus;
@@ -29,15 +31,10 @@ public class SslSettingsController
     private final EventBus _eventBus;
     private final UserPreferences _userPreferences;
 
-    public SslSettingsController(EventBus eventBus, Stage primaryStage, UserPreferences userPreferences)
+    public SslSettingsController(EventBus eventBus, UserPreferences userPreferences)
     {
         _eventBus = eventBus;
         _userPreferences = userPreferences;
-
-        primaryStage.setOnCloseRequest(e ->
-        {
-            _userPreferences.putSslState(getSslState());
-        });
     }
 
     @FXML

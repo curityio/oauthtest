@@ -2,15 +2,21 @@ package se.curity.oauth.core.controller.flows.code;
 
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import se.curity.oauth.core.component.HelpTooltip;
 import se.curity.oauth.core.state.CodeFlowAuthzState;
+import se.curity.oauth.core.util.UserPreferences;
 import se.curity.oauth.core.util.Validators;
 import se.curity.oauth.core.util.Workers;
+import se.curity.oauth.core.util.event.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -33,19 +39,57 @@ public class CodeFlowAuthzRequestController implements CodeFlowController.CodeFl
     @FXML
     public ImageView redirectUriImageView;
 
+    private final EventBus _eventBus;
+    private final UserPreferences _userPreferences;
     private final Workers _workers;
     private final HelpTooltip _helpTooltip;
 
-    public CodeFlowAuthzRequestController(Workers workers,
-                                          HelpTooltip helpTooltip)
+    public CodeFlowAuthzRequestController(EventBus eventBus, Stage primaryStage, UserPreferences userPreferences,
+                                          Workers workers, HelpTooltip helpTooltip)
     {
         _workers = workers;
         _helpTooltip = helpTooltip;
+        _userPreferences = userPreferences;
+        _eventBus = eventBus;
+
+        EventHandler<WindowEvent> onCloseRequest = primaryStage.getOnCloseRequest();
+
+        primaryStage.setOnCloseRequest(e ->
+        {
+            _userPreferences.putCodeFlowPreferences(getCodeFlowAuthzState());
+
+            if (onCloseRequest != null)
+            {
+                onCloseRequest.handle(e);
+            }
+        });
     }
 
     @FXML
     private void initialize()
     {
+        CodeFlowAuthzState initialCodeFlowPreferences = _userPreferences.getCodeFlowPreferences();
+
+        String responseType = initialCodeFlowPreferences.getResponseType();
+
+        if (!Objects.equals(responseType, "code"))
+        {
+            System.err.println(String.format("Cannot initialize code flow with any other response type " +
+                    "then 'code'. The value '%s' is not valid", responseType));
+
+            responseType = "code";
+        }
+
+        responseTypeField.setText(responseType);
+        clientIdField.setText(initialCodeFlowPreferences.getClientId());
+        redirectUriField.setText(initialCodeFlowPreferences.getRedirectUri());
+        scopeField.setText(initialCodeFlowPreferences.getScope());
+        stateField.setText(initialCodeFlowPreferences.getState());
+
+        _eventBus.publish(initialCodeFlowPreferences);
+
+        setInvalidationListener(observable -> _eventBus.publish(getCodeFlowAuthzState()));
+
         _workers.runInBackground(() ->
         {
             Properties codeFlowViewProperties = new Properties();
