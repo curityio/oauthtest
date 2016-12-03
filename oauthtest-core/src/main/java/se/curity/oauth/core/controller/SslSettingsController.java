@@ -31,21 +31,10 @@ public class SslSettingsController
     private final EventBus _eventBus;
     private final UserPreferences _userPreferences;
 
-    public SslSettingsController(EventBus eventBus, Stage primaryStage, UserPreferences userPreferences)
+    public SslSettingsController(EventBus eventBus, UserPreferences userPreferences)
     {
         _eventBus = eventBus;
         _userPreferences = userPreferences;
-        EventHandler<WindowEvent> onCloseRequest = primaryStage.getOnCloseRequest();
-
-        primaryStage.setOnCloseRequest(e ->
-        {
-            _userPreferences.putSslPreferences(getSslState());
-
-            if (onCloseRequest != null)
-            {
-                onCloseRequest.handle(e);
-            }
-        });
     }
 
     @FXML

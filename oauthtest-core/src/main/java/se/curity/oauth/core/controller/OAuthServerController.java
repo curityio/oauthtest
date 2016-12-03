@@ -28,24 +28,10 @@ public class OAuthServerController
     private final EventBus _eventBus;
     private final UserPreferences _userPreferences;
 
-    public OAuthServerController(EventBus eventBus,
-                                 Stage primaryStage,
-                                 UserPreferences userPreferences)
+    public OAuthServerController(EventBus eventBus, UserPreferences userPreferences)
     {
         _eventBus = eventBus;
         _userPreferences = userPreferences;
-
-        EventHandler<WindowEvent> onCloseRequest = primaryStage.getOnCloseRequest();
-
-        primaryStage.setOnCloseRequest(e ->
-        {
-            _userPreferences.putOAuthServerPreferences(getOAuthServerState());
-
-            if (onCloseRequest != null)
-            {
-                onCloseRequest.handle(e);
-            }
-        });
     }
 
     @FXML
